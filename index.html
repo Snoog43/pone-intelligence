@@ -163,6 +163,12 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
 #plan-tabs .tier[aria-selected="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .gantt td i.pg{cursor:pointer}
 
+/* Sales evolution */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:500 12.5px var(--f-body);background:var(--surface);color:var(--muted);border:0;padding:6px 12px;cursor:pointer}
+.seg button[aria-checked="true"]{background:var(--fg);color:var(--bg)}
+.s-in{width:64px;font:500 13px var(--f-mono);padding:5px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--fg)}
+
 /* LinkedIn A–Z */
 .li-progress{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;position:sticky;top:0;z-index:2;background:var(--bg);padding-block:10px}
 .li-progress .track{height:10px;background:var(--sunk);border-radius:5px;overflow:hidden}
@@ -204,6 +210,7 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
   <button role="tab" id="t-adv" aria-selected="false" data-v="adv">Advice</button>
   <button role="tab" id="t-camp" aria-selected="false" data-v="camp">Campaign 2027</button>
   <button role="tab" id="t-plan" aria-selected="false" data-v="plan">Big plan 2027</button>
+  <button role="tab" id="t-sales" aria-selected="false" data-v="sales">Sales evolution</button>
   <button role="tab" id="t-li" aria-selected="false" data-v="li">LinkedIn A–Z</button>
 </nav>
 
@@ -644,6 +651,55 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
   </div>
 </section>
 
+<!-- ============ SALES EVOLUTION ============ -->
+<section class="view page" id="v-sales" role="tabpanel" hidden>
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Sales evolution · month by month, 2026 – 2029</div>
+      <h2 style="font-size:24px">Where the cards come from</h2>
+      <p class="lede">Planned monthly sales by sales source and by distribution channel, with your actual figures on top. The plan follows the €20M scenario in the Optimisation section, so moving its sliders changes this tab too. Actuals are only what you have given: about 50 cards a month earlier in 2026, 150 in September 2026. Enter the rest below.</p>
+    </div>
+
+    <div class="card" style="display:grid;gap:12px">
+      <div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center">
+        <div class="seg" role="radiogroup" aria-label="Breakdown" id="s-view">
+          <button type="button" role="radio" aria-checked="true" data-v="engine">By sales source</button>
+          <button type="button" role="radio" aria-checked="false" data-v="channel">By distribution channel</button>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="Unit" id="s-unit">
+          <button type="button" role="radio" aria-checked="true" data-v="cards">Cards</button>
+          <button type="button" role="radio" aria-checked="false" data-v="eur">Revenue €</button>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="Period" id="s-range">
+          <button type="button" role="radio" aria-checked="true" data-v="27">2026 – 2027</button>
+          <button type="button" role="radio" aria-checked="false" data-v="29">2026 – 2029</button>
+        </div>
+      </div>
+      <div class="kpis" id="s-kpis"></div>
+      <svg id="s-chart" role="img" aria-label="Monthly sales by source" style="width:100%;height:340px;display:block"></svg>
+      <div class="keyrow" id="s-legend"></div>
+      <p class="muted" style="margin:0;font-size:12.5px" id="s-note"></p>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:16px">Month by month</h3>
+      <div style="overflow-x:auto"><table class="reg" id="s-table"></table></div>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between">
+        <h3 style="font-size:16px">Your actual sales</h3>
+        <span class="muted" style="font-size:12.5px">Saved in this browser only. Total cards per month; split by channel if you know it.</span>
+      </div>
+      <div style="overflow-x:auto"><table class="reg" id="s-actuals"></table></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button class="btn" id="s-copy">Copy as CSV</button>
+        <button class="btn" id="s-clear">Clear my entries</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ LINKEDIN A–Z ============ -->
 <section class="view page" id="v-li" role="tabpanel" hidden>
   <div class="inner">
@@ -673,7 +729,7 @@ const css = getComputedStyle(document.documentElement);
 const col = c => css.getPropertyValue('--'+c).trim();
 
 /* ======================= TABS ======================= */
-const views = {tree:'v-tree',cmp:'v-cmp',rep:'v-rep',risk:'v-risk',adv:'v-adv',camp:'v-camp',plan:'v-plan',li:'v-li'};
+const views = {tree:'v-tree',cmp:'v-cmp',rep:'v-rep',risk:'v-risk',adv:'v-adv',camp:'v-camp',plan:'v-plan',sales:'v-sales',li:'v-li'};
 function show(v){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.v===v));
   Object.entries(views).forEach(([k,id])=>document.getElementById(id).hidden = k!==v);
@@ -682,6 +738,7 @@ function show(v){
   if(v==='risk') requestAnimationFrame(()=>{ if(!$('brands').children.length) loadBrand(brand); else simulate(); });
   if(v==='camp') requestAnimationFrame(campSim);
   if(v==='plan') renderPlan();
+  if(v==='sales') requestAnimationFrame(()=>{ if(!$('s-actuals').children.length) renderActuals(); renderSales(); });
   if(location.hash.slice(1)!==v) history.replaceState(null,'','#'+v);
 }
 document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.v)));
@@ -1150,7 +1207,7 @@ function optCalc(o){
     const r={p:pc*net,d:dc*F.dprice,g:gc*F.gprice,oem:oc*F.oemPrice,sub:base*F.sub};
     const fromStock=Math.min(stock,sold); stock-=fromStock; prod+=sold-fromStock; if(stock<=0&&stockOut===null) stockOut=t;
     for(const k in tot) tot[k]+=r[k];
-    rows.push({...r,cards:sold,date:MONTHS[t]});
+    rows.push({...r,cards:sold,date:MONTHS[t],cp:pc,cd:dc,cg:gc,co:oc});
   }
   const rev=Object.values(tot).reduce((a,b)=>a+b,0), cost=prod*o.cogs;
   return {rows,tot,rev,cards,prod,cost,gm:rev-cost,stockOut,net};
@@ -1504,6 +1561,83 @@ $('plan-tabs').addEventListener('click',e=>{const b=e.target.closest('.tier');if
 $('plan-months').addEventListener('change',e=>{if(e.target.type!=='checkbox')return;planDone[e.target.dataset.id]=e.target.checked;try{localStorage.setItem('plan-done',JSON.stringify(planDone))}catch(err){}e.target.closest('.plan-item').classList.toggle('done',e.target.checked);const P=PLANS.find(p=>p.k===planK);const d=P.items.filter((it,i)=>planDone[P.k+i]).length;const b=$('plan-tabs').querySelector(`[data-k="${planK}"] .num`);if(b)b.textContent=`${d} / ${P.items.length} done`});
 $('plan-gantt').addEventListener('pointermove',e=>{const c=e.target.closest('.pg');if(c)showTip(e,c.dataset.tip);else hideTip()});
 $('plan-gantt').addEventListener('pointerleave',hideTip);
+
+/* ======================= SALES EVOLUTION ======================= */
+// Partner split by country follows the partner list on ponebiometrics.com until real sell-out data exists
+const P_SPLIT=[["Norway",10,"c-pone"],["Sweden",5,"c-yub"],["France",6,"c-swiss"],["DACH",4,"c-idex"],["Other",2,"neu"]];
+const S_SRC=[{k:"cp",n:"Partners",c:"c-pone",e:"p"},{k:"cd",n:"Direct large accounts",c:"c-yub",e:"d"},{k:"cg",n:"Public rollout",c:"c-swiss",e:"g"},{k:"co",n:"OEM",c:"c-idex",e:"oem"},{k:"cs",n:"Support subscriptions",c:"gap",e:"sub",eurOnly:true}];
+let sView='engine', sUnit='cards', sRange='27';
+let sAct={}; try{sAct=JSON.parse(localStorage.getItem('sales-actuals')||'{}')}catch(e){}
+if(!('2026-09' in sAct)) sAct['2026-09']=150;
+const ymKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+const ymLbl=d=>d.toLocaleString('en',{month:'short',year:'numeric'});
+function salesSeries(){
+  let o; try{o=optRead()}catch(e){o={...OPT_DEF}}
+  const R=optCalc(o), net=R.net, out=[];
+  for(let m=0;m<9;m++) out.push({date:new Date(2026,m,1),plan:false});
+  // Oct–Dec 2026: today's partner pace while the stock campaign runs
+  [150,175,200].forEach((c,i)=>out.push({date:new Date(2026,9+i,1),plan:true,cp:c,cd:0,cg:0,co:0,p:c*net,d:0,g:0,oem:0,sub:0}));
+  R.rows.forEach(r=>out.push({date:r.date,plan:true,cp:r.cp,cd:r.cd,cg:r.cg,co:r.co,p:r.p,d:r.d,g:r.g,oem:r.oem,sub:r.sub}));
+  return {rows:out,net};
+}
+function salesCats(){
+  if(sView==='engine') return S_SRC.filter(s=>sUnit==='eur'||!s.eurOnly).map(s=>({n:s.n,c:s.c,v:r=>sUnit==='eur'?r[s.e]:r[s.k]}));
+  const tot=P_SPLIT.reduce((a,b)=>a+b[1],0);
+  return [...P_SPLIT.map(([n,w,c])=>({n:`Partners · ${n}`,c,v:r=>(sUnit==='eur'?r.p:r.cp)*w/tot})),
+    {n:"Direct large accounts",c:"accent",v:r=>sUnit==='eur'?r.d:r.cd},{n:"Public rollout (Norway first)",c:"neg",v:r=>sUnit==='eur'?r.g:r.cg},{n:"OEM partner",c:"pos",v:r=>sUnit==='eur'?r.oem:r.co},
+    ...(sUnit==='eur'?[{n:"Support subscriptions",c:"gap",v:r=>r.sub}]:[])];
+}
+function renderSales(){
+  const {rows,net}=salesSeries(), cats=salesCats(), end=sRange==='27'?new Date(2027,11,1):new Date(2029,11,1);
+  const data=rows.filter(r=>r.date<=end);
+  const fmtV=v=>sUnit==='eur'?eur(v/1e6):Math.round(v).toLocaleString('en');
+  const planTot=r=>r.plan?cats.reduce((s,c)=>s+c.v(r),0):0;
+  const actV=r=>{const a=sAct[ymKey(r.date)];return a==null||a===''?null:(sUnit==='eur'?a*net:+a)};
+  // KPIs
+  const planned=data.reduce((s,r)=>s+planTot(r),0), acts=data.map(actV).filter(v=>v!=null);
+  const last=[...data].reverse().find(r=>actV(r)!=null);
+  const y27=rows.filter(r=>r.date.getFullYear()===2027).reduce((s,r)=>s+planTot(r),0);
+  $('s-kpis').innerHTML=[
+    [fmtV(planned),`planned ${sUnit==='eur'?'revenue':'cards'}, Oct 2026 – ${ymLbl(end)}`],
+    [fmtV(y27),`planned in 2027`],
+    [last?`${fmtV(actV(last))}`:'—',last?`latest actual (${ymLbl(last.date)})`:'no actuals entered'],
+    [`${acts.length}`,'months with actuals entered']
+  ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
+  // Chart: stacked bars for the plan, a line for actuals
+  const el=$('s-chart'), W=Math.max(el.clientWidth,360), H=340, m={l:58,r:14,t:14,b:30};
+  const xs=d3.scaleBand().domain(data.map(r=>ymKey(r.date))).range([m.l,W-m.r]).padding(.18);
+  const ymax=d3.max(data,r=>Math.max(planTot(r),actV(r)||0))*1.1||1;
+  const ys=d3.scaleLinear().domain([0,ymax]).nice().range([H-m.b,m.t]);
+  const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
+  s.append('g').selectAll('line').data(ys.ticks(5)).join('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',d=>ys(d)).attr('y2',d=>ys(d)).attr('stroke',col('line')).attr('stroke-dasharray','2 3');
+  data.forEach(r=>{ if(!r.plan) return; let y0=0; cats.forEach(c=>{const v=c.v(r); if(v<=0) return; s.append('rect').attr('x',xs(ymKey(r.date))).attr('width',xs.bandwidth()).attr('y',ys(y0+v)).attr('height',Math.max(0,ys(y0)-ys(y0+v))).attr('fill',col(c.c)).attr('fill-opacity',.8); y0+=v;});});
+  const ap=data.filter(r=>actV(r)!=null);
+  if(ap.length){
+    s.append('path').attr('d',d3.line().x(r=>xs(ymKey(r.date))+xs.bandwidth()/2).y(r=>ys(actV(r)))(ap)).attr('fill','none').attr('stroke',col('fg')).attr('stroke-width',2.2);
+    ap.forEach(r=>s.append('circle').attr('cx',xs(ymKey(r.date))+xs.bandwidth()/2).attr('cy',ys(actV(r))).attr('r',4.5).attr('fill',col('fg')).attr('stroke',col('surface')).attr('stroke-width',1.5));
+  }
+  const step=Math.ceil(data.length/(W<700?8:16));
+  s.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(xs).tickValues(data.filter((r,i)=>i%step===0).map(r=>ymKey(r.date))).tickFormat(k=>{const [y,mo]=k.split('-');return new Date(+y,+mo-1,1).toLocaleString('en',{month:'short'})+(mo==='01'||k===ymKey(data[0].date)?` ${y.slice(2)}`:'')})).call(a=>a.select('.domain').attr('stroke',col('line'))).call(a=>a.selectAll('line').attr('stroke',col('line'))).call(a=>a.selectAll('text').style('fill',col('muted')));
+  s.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(ys).ticks(5).tickFormat(v=>sUnit==='eur'?eur(v/1e6):d3.format('~s')(v))).call(a=>a.select('.domain').remove()).call(a=>a.selectAll('line').remove()).call(a=>a.selectAll('text').style('fill',col('muted')));
+  s.append('rect').attr('x',m.l).attr('y',m.t).attr('width',W-m.l-m.r).attr('height',H-m.t-m.b).attr('fill','transparent')
+    .on('pointermove',e=>{const [mx]=d3.pointer(e);const i=Math.max(0,Math.min(data.length-1,Math.floor((mx-m.l)/((W-m.l-m.r)/data.length))));const r=data[i];const a=actV(r);
+      showTip(e,`<b>${r.date.toLocaleString('en',{month:'long',year:'numeric'})}</b>${r.plan?[...cats].reverse().map(c=>`<div>${dot(c.c)}${c.n}: ${fmtV(c.v(r))}</div>`).join('')+`<div><b>Plan: ${fmtV(planTot(r))}</b></div>`:'<div class="muted">No plan before October 2026</div>'}<div>${a!=null?`Actual: <b>${fmtV(a)}</b>${r.plan?` (${a>=planTot(r)?'+':''}${Math.round((a/planTot(r)-1)*100)}% vs plan)`:''}`:'<span class="muted">No actual entered</span>'}</div>`)})
+    .on('pointerleave',hideTip);
+  $('s-legend').innerHTML=cats.map(c=>`<span style="--b:var(--${c.c})">${c.n}</span>`).join('')+`<span style="--b:var(--fg)">Actual (your figures)</span>`;
+  $('s-note').textContent=(sView==='channel'?'Partner sales are split by country in proportion to the partners listed on ponebiometrics.com (Norway 10, France 6, Sweden 5, DACH 4, other 2) until you enter real sell-out per partner. ':'')+'Oct–Dec 2026 assumes the stock campaign takes partner sales from 150 to 200 cards a month; 2027–2029 come from the €20M plan.'+(sUnit==='eur'?` Revenue uses €${net.toFixed(2)} net per partner card, €135 direct, €120 public, €85 OEM.`:'');
+  // Table
+  const tdata=data.filter(r=>r.plan||actV(r)!=null);
+  $('s-table').innerHTML=`<thead><tr><th>Month</th>${cats.map(c=>`<th>${dot(c.c)}${c.n}</th>`).join('')}<th>Plan</th><th>Actual</th><th>Gap</th></tr></thead><tbody>${tdata.map(r=>{const p=planTot(r),a=actV(r);return `<tr${r.date.getMonth()===11?' style="border-bottom:2px solid var(--line)"':''}><td class="mono">${ymLbl(r.date)}</td>${cats.map(c=>`<td class="mono">${r.plan?fmtV(c.v(r)):'—'}</td>`).join('')}<td class="mono"><b>${r.plan?fmtV(p):'—'}</b></td><td class="mono">${a!=null?fmtV(a):'—'}</td><td class="mono">${a!=null&&r.plan?`<span class="pill ${a>=p?'p-good':a>=p*.8?'p-mid':'p-bad'}">${a>=p?'+':''}${Math.round((a/p-1)*100)}%</span>`:'—'}</td></tr>`}).join('')}</tbody>`;
+}
+function renderActuals(){
+  const months=d3.range(24).map(i=>new Date(2026,i,1));
+  $('s-actuals').innerHTML=`<thead><tr>${months.slice(0,12).map(d=>`<th>${d.toLocaleString('en',{month:'short'})} 26</th>`).join('')}</tr></thead><tbody><tr>${months.slice(0,12).map(d=>`<td><input type="number" min="0" step="1" class="s-in" id="act-${ymKey(d)}" data-k="${ymKey(d)}" value="${sAct[ymKey(d)]??''}" aria-label="Cards sold ${ymLbl(d)}"></td>`).join('')}</tr></tbody><thead><tr>${months.slice(12).map(d=>`<th>${d.toLocaleString('en',{month:'short'})} 27</th>`).join('')}</tr></thead><tbody><tr>${months.slice(12).map(d=>`<td><input type="number" min="0" step="1" class="s-in" id="act-${ymKey(d)}" data-k="${ymKey(d)}" value="${sAct[ymKey(d)]??''}" aria-label="Cards sold ${ymLbl(d)}"></td>`).join('')}</tr></tbody>`;
+}
+$('s-actuals').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;const v=e.target.value;if(v==='')delete sAct[k];else sAct[k]=+v;try{localStorage.setItem('sales-actuals',JSON.stringify(sAct))}catch(err){}renderSales()});
+$('s-copy').onclick=e=>{const txt='month,cards\n'+Object.keys(sAct).sort().map(k=>`${k},${sAct[k]}`).join('\n');const b=e.currentTarget;
+  try{navigator.clipboard.writeText(txt).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy as CSV',1500)},()=>{b.textContent='Copy failed'})}catch(err){b.textContent='Copy failed'}};
+$('s-clear').onclick=()=>{sAct={'2026-09':150};try{localStorage.setItem('sales-actuals',JSON.stringify(sAct))}catch(err){}renderActuals();renderSales()};
+[['s-view',v=>sView=v],['s-unit',v=>sUnit=v],['s-range',v=>sRange=v]].forEach(([id,set])=>$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-checked',x===b));set(b.dataset.v);renderSales()}));
 
 /* ======================= LINKEDIN A–Z ======================= */
 const LI=[
