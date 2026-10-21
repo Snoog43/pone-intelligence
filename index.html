@@ -156,6 +156,13 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
 .tier[aria-checked="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .reg td.sel,.reg th.sel{background:var(--accent-bg)}
 
+/* Big plan */
+.plan-item{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:8px 0;border-top:1px solid var(--line);cursor:pointer;font-size:13.5px}
+.plan-item input{width:18px;height:18px;margin-top:2px;accent-color:var(--pos)}
+.plan-item.done{opacity:.55}.plan-item.done b{text-decoration:line-through}
+#plan-tabs .tier[aria-selected="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.gantt td i.pg{cursor:pointer}
+
 /* LinkedIn A–Z */
 .li-progress{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;position:sticky;top:0;z-index:2;background:var(--bg);padding-block:10px}
 .li-progress .track{height:10px;background:var(--sunk);border-radius:5px;overflow:hidden}
@@ -196,6 +203,7 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
   <button role="tab" id="t-risk" aria-selected="false" data-v="risk">Revenue target risk</button>
   <button role="tab" id="t-adv" aria-selected="false" data-v="adv">Advice</button>
   <button role="tab" id="t-camp" aria-selected="false" data-v="camp">Campaign 2027</button>
+  <button role="tab" id="t-plan" aria-selected="false" data-v="plan">Big plan 2027</button>
   <button role="tab" id="t-li" aria-selected="false" data-v="li">LinkedIn A–Z</button>
 </nav>
 
@@ -616,6 +624,26 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
   </div>
 </section>
 
+<!-- ============ BIG PLAN ============ -->
+<section class="view page" id="v-plan" role="tabpanel" hidden>
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Big plan · November 2026 – December 2027</div>
+      <h2 style="font-size:24px">The plan, month by month</h2>
+      <p class="lede">Everything decided in the other tabs, turned into dated actions. Pick a plan below. Tick actions as they are done; ticks are saved in this browser only. Event dates marked "to confirm" follow each event's usual month and should be checked before booking.</p>
+    </div>
+    <div class="tier-pick" role="tablist" aria-label="Plans" id="plan-tabs"></div>
+    <div class="card" id="plan-summary" style="display:grid;gap:10px"></div>
+    <div class="card">
+      <h3 style="font-size:16px;margin-bottom:4px">Overview</h3>
+      <p class="muted" style="margin:0 0 10px;font-size:13px">Each row is a workstream; hover a cell for the actions that month.</p>
+      <div style="overflow-x:auto"><table class="gantt" id="plan-gantt"></table></div>
+    </div>
+    <div class="card" id="plan-calendar" style="display:grid;gap:10px"></div>
+    <div id="plan-months" style="display:grid;gap:14px"></div>
+  </div>
+</section>
+
 <!-- ============ LINKEDIN A–Z ============ -->
 <section class="view page" id="v-li" role="tabpanel" hidden>
   <div class="inner">
@@ -645,7 +673,7 @@ const css = getComputedStyle(document.documentElement);
 const col = c => css.getPropertyValue('--'+c).trim();
 
 /* ======================= TABS ======================= */
-const views = {tree:'v-tree',cmp:'v-cmp',rep:'v-rep',risk:'v-risk',adv:'v-adv',camp:'v-camp',li:'v-li'};
+const views = {tree:'v-tree',cmp:'v-cmp',rep:'v-rep',risk:'v-risk',adv:'v-adv',camp:'v-camp',plan:'v-plan',li:'v-li'};
 function show(v){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.v===v));
   Object.entries(views).forEach(([k,id])=>document.getElementById(id).hidden = k!==v);
@@ -653,6 +681,7 @@ function show(v){
   if(v==='tree') requestAnimationFrame(()=>fit(false));
   if(v==='risk') requestAnimationFrame(()=>{ if(!$('brands').children.length) loadBrand(brand); else simulate(); });
   if(v==='camp') requestAnimationFrame(campSim);
+  if(v==='plan') renderPlan();
   if(location.hash.slice(1)!==v) history.replaceState(null,'','#'+v);
 }
 document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.v)));
@@ -1329,6 +1358,152 @@ const ADV=[
   $('camp-reset').onclick=()=>{Object.entries(CDEF).forEach(([k2,v])=>$(k2).value=v);tier='rec';renderTiers();campSim()};
   renderTiers();
 })();
+
+/* ======================= BIG PLAN ======================= */
+const PM=["Nov 2026","Dec 2026","Jan 2027","Feb 2027","Mar 2027","Apr 2027","May 2027","Jun 2027","Jul 2027","Aug 2027","Sep 2027","Oct 2027","Nov 2027","Dec 2027"];
+// Tech and regulatory calendar: [month index, date, name, place, status, what Pone does there]
+const CAL=[
+ [0,"30 Nov 2026","Experts Live UK: call for speakers closes","London","confirmed","Submit a talk on passkey cards for Entra admins"],
+ [1,"by end Dec 2026","EIC 2027: talk proposals (expected deadline)","Berlin","to confirm","Submit a talk; early-bird tickets end 31 Dec"],
+ [1,"Oct–Dec 2026","Infosecurity Europe 2027: call for speakers","London","to confirm","Talk slots require exhibiting; decide by December"],
+ [1,"24 Dec 2026","EU digital identity wallets due in every member state","EU","confirmed","Hook for biometrics-in-the-wallet articles"],
+ [2,"27 Jan 2027","E-Crime & Cybersecurity Nordics","Helsinki","to confirm","Optional visit"],
+ [2,"28 Jan 2027","Data Privacy Day","Global","confirmed","Post on biometrics staying on the card"],
+ [3,"1 Feb 2027","Microsoft switches off SMS and voice MFA in Entra","Global","confirmed","Peak of the \"SMS ends\" campaign"],
+ [3,"9 Feb 2027","Safer Internet Day","EU","confirmed","Social post and partner newsletter"],
+ [3,"9–10 Feb 2027","Experts Live Denmark","Copenhagen","to confirm","Visit: Microsoft experts and Nordic partners"],
+ [4,"8–9 Mar 2027","Gartner Identity & Access Management Summit","London","to confirm","Analyst briefing; exhibitor booking open now"],
+ [4,"9–11 Mar 2027","InCyber Forum Europe (FIC)","Lille","confirmed","Start-up pavilion or visit; French press and partners"],
+ [4,"11 Mar 2027","Next IT Security Nordics (CISOs, invite only)","Stockholm","to confirm","Ask for an invitation through Swedish partners"],
+ [4,"25–29 Mar 2027","Easter in Norway","Norway","confirmed","No launches or mailings that week"],
+ [5,"5–8 Apr 2027","RSAC","San Francisco","confirmed","Optional: watch announcements, meet OEM candidates"],
+ [5,"Apr 2027","NSM Sikkerhetskonferansen","Oslo","to confirm","Norwegian public sector: attend and meet agencies"],
+ [6,"6 May 2027","World Password Day (also Ascension Day in Norway)","Global","confirmed","Press angle; run Norwegian activity on 5 or 7 May"],
+ [6,"11–14 May 2027","European Identity and Cloud Conference (EIC)","Berlin","confirmed","DACH partners and KuppingerCole; talk if accepted"],
+ [6,"17 May 2027","Constitution Day and Whit Monday","Norway","confirmed","No mailings that week"],
+ [6,"18–20 May 2027","Experts Live UK","London","to confirm","Talk if accepted"],
+ [6,"26–27 May 2027","Cybersec Europe","Brussels","to confirm","Optional visit"],
+ [7,"8–10 Jun 2027","Infosecurity Europe","London","confirmed","Visit; UK and international press"],
+ [7,"15–16 Jun 2027","Identity Week Europe","Amsterdam","confirmed","Talk or panel; card and identity ecosystem"],
+ [8,"1 Jul 2027","Possible later Entra SMS cut-off for global admins","Global","to confirm","Second wave of the campaign for admin accounts"],
+ [8,"3 Jul – 1 Sep 2027","French summer holidays","France","confirmed","No French campaigns from mid-July"],
+ [8,"12 Jul – 1 Aug 2027","Fellesferie (Norwegian summer holiday)","Norway","confirmed","Prepare autumn content; no campaigns"],
+ [9,"16–20 Aug 2027","Arendalsuka","Arendal","to confirm","Public-sector and NIS2 debate; meet agencies"],
+ [9,"late Aug 2027","Sikkerhetsfestivalen","Lillehammer","to confirm","Booth or talk: the key Norwegian security event"],
+ [10,"~13 Sep 2027","Norwegian local elections","Norway","to confirm","Municipal decisions slow down around the vote"],
+ [10,"Sep 2027","Gartner Security & Risk Management Summit","London","to confirm","Optional analyst meetings"],
+ [11,"Oct 2027","European Cybersecurity Month","EU","confirmed","Weekly content series"],
+ [11,"early Oct 2027","Norwegian state budget for 2028","Oslo","confirmed","Public buyers plan 2028 purchases: send offers"],
+ [11,"early Oct 2027","Les Assises de la cybersécurité","Monaco","to confirm","One-to-one meetings with French CISOs; book early"],
+ [11,"19–21 Oct 2027","NIC Nordic Infrastructure Conference","Oslo","confirmed","Main Norwegian Microsoft event: talk and booth"],
+ [11,"Oct 2027","FIDO Authenticate","USA","to confirm","Talk on biometric cards (submit by spring)"],
+ [11,"late Oct 2027","it-sa","Nuremberg","to confirm","Partner booth with Kutzschbach or BPN"],
+ [12,"mid Nov 2027","Microsoft Ignite","San Francisco","to confirm","Publish a reaction to Entra announcements"],
+ [12,"Nov–Dec 2027","Public-sector year-end budget spend","Norway","to confirm","Close public orders before year end"],
+ [13,"11 Dec 2027","EU Cyber Resilience Act applies in full","EU","confirmed","Compliance page for OFFPAD"],
+ [13,"24 Dec 2027","eIDAS 2: regulated companies must accept EU wallets","EU","confirmed","Passkeys and wallets article"]
+];
+
+const PLAN_COM={k:"com",n:"Communication",c:"c-yub",
+ goal:"Make Pone the reference for \"see what you approve\" passkey cards among Entra admins and security leads in the Nordics, France and DACH.",
+ kpis:[["€150k","budget, 14 months"],["600","qualified leads"],["21","new customers from the campaign"],["1.4–3.3M","impressions"]],
+ ws:["Foundations","SMS-ends campaign","Microsoft experts","LinkedIn ads","Press","Events","Public sector","Partners"],
+ budget:[8,10,13,12,14,14,9,14,3,11,9,20,8,5],
+ items:[
+  [0,"Foundations","Message and landing page","Five positioning axes (Campaign tab); landing page \"SMS codes end on 1 February\"; demo video (2 min)."],
+  [0,"Foundations","Three case studies","Get written approval from three customers; publish with numbers."],
+  [0,"Partners","Partner kit","Slides, demo units, price tiers, email templates for the 23 partners."],
+  [0,"Events","Book 2027 events","Gartner IAM exhibitor slot, InCyber pavilion, decide on Infosecurity Europe; talk submissions for Experts Live UK and EIC."],
+  [0,"Press","Press list","Digi.no, ITavisen, Computerworld, DN/E24, ZATAZ, LeMagIT, Journal du Net, heise, Biometric Update."],
+  [1,"Microsoft experts","Seed 30 cards","Free OFFPAD+ to Microsoft MVPs and security creators (Frode Hus, Simon Skotheimsvik, Haflidi Fridthjofsson and others)."],
+  [1,"SMS-ends campaign","Launch","Email partners and customers; LinkedIn posts; landing page live."],
+  [1,"Press","Release #1","\"60 days before SMS codes end in Entra\"."],
+  [2,"LinkedIn ads","Start narrow ads","Entra and Microsoft 365 admins, IT managers, CISOs in Norway, Sweden, France, DACH. €3–4k a month."],
+  [2,"SMS-ends campaign","Webinar #1","\"Replace SMS before 1 February\" with a Microsoft MVP."],
+  [2,"Partners","Q1 campaign kit","Co-funded mailing with the top 10 partners."],
+  [3,"SMS-ends campaign","Switch-off day","1 February: press release, live posts, partner push, offer for latecomers."],
+  [3,"Events","Experts Live Denmark","Copenhagen, 9–10 Feb: visit; meet Microsoft experts."],
+  [4,"SMS-ends campaign","Close the campaign","Follow up every lead; publish results (pilots started)."],
+  [4,"Microsoft experts","Webinar #2","Deploying passkey cards with Intune."],
+  [4,"Events","InCyber Forum Lille","9–11 March: start-up pavilion or visit with French partners Cardelya, EISN, Hackmosphere."],
+  [4,"Events","Gartner IAM Summit","London, 8–9 March: analyst briefing."],
+  [5,"Public sector","NSM Sikkerhetskonferansen","Oslo, April: meet public-sector security leads."],
+  [5,"Partners","Q2 campaign kit","NIS2 offer for partners."],
+  [6,"Press","World Password Day","Release and media comments on 5–6 May."],
+  [6,"Events","EIC Berlin","11–14 May: DACH partners Kutzschbach, BPN, Agon."],
+  [7,"Events","Infosecurity Europe and Identity Week","London 8–10 June; Amsterdam 15–16 June."],
+  [8,"SMS-ends campaign","Admin wave","If Microsoft confirms a 1 July cut-off for global admins: short campaign on admin accounts before the holidays."],
+  [7,"Public sector","Start the NIS2 push","Monitor Doffin tenders; meet municipalities and health trusts through partners on framework agreements."],
+  [8,"Foundations","Summer prep","Write autumn content; book October events; no campaigns during fellesferie."],
+  [9,"Events","Arendalsuka and Sikkerhetsfestivalen","Arendal 16–20 Aug; booth or talk in Lillehammer (late August)."],
+  [9,"Partners","Q3 campaign kit","Autumn budget offer."],
+  [10,"Public sector","Budget-season offers","Send offers to public buyers before the state budget."],
+  [10,"LinkedIn ads","Restart ads","Retarget webinar and landing-page visitors."],
+  [11,"Events","October shows","NIC Oslo 19–21 Oct (booth and talk), Les Assises, it-sa with a DACH partner, FIDO Authenticate."],
+  [11,"Press","Cybersecurity Month","Weekly content; release with customer numbers."],
+  [11,"Partners","Q4 campaign kit","Year-end budget flush offer."],
+  [12,"Press","Ignite reaction","Comment on Microsoft's identity announcements."],
+  [13,"Foundations","Results and 2028 plan","Review leads, pilots, customers, cost per customer; plan 2028."]
+ ]};
+const PLAN_OBJ={k:"obj",n:"Objectif €20M",c:"c-idex",
+ goal:"Put in place the four sales engines that make €20M over 2027–2029 possible: partners, large accounts, a public rollout and an OEM deal.",
+ kpis:[["~11k","cards a month by Dec 2029 in the plan"],["42","active partners by Dec 2027"],["6","large direct deals in 2027"],["1","OEM contract signed in 2027"]],
+ ws:["Cash and funding","Team","Partners","Large accounts","Certification","OEM","Subscription","Public sector"],
+ items:[
+  [0,"Cash and funding","Sell the stock first","Partner campaign on the 4,000 cards in stock: about €450k of cash at partner prices."],
+  [0,"Cash and funding","Prepare the funding round","Size it for production (about €11M of cards over three years) plus team; use the NOK 30M convertible authorisation."],
+  [0,"Partners","Tiered partner programme","20% under 50 cards a year, 25% standard, 30% above 500; pay on activated cards."],
+  [1,"Cash and funding","Working capital","Supplier payment terms, Innovasjon Norge guarantee, prepayment on large orders."],
+  [1,"Certification","Start FIDO Level 2","Book the lab; Level 2 opens tenders already open to IDEX and Yubico."],
+  [2,"Team","Hire channel manager and enterprise seller","Move existing sellers into these two roles; route deals under 50 cards to partners."],
+  [2,"Large accounts","Target list","150 named accounts in energy, finance, health and law."],
+  [3,"Partners","Recruit","Goal: 30 active partners by end of Q1 (Atea, Crayon, Sopra Steria approached)."],
+  [3,"Subscription","Launch OFFPAD as a service","Card, support and replacement per user per month."],
+  [4,"OEM","OEM shortlist","Identity groups, card makers and MSP platforms; first meetings."],
+  [4,"Cash and funding","Close the round","Before Q2 production orders."],
+  [5,"Certification","Start Common Criteria or FIPS","Choose based on the first large tender."],
+  [5,"Large accounts","First large deals","Two deals of about 400 cards in H1."],
+  [6,"OEM","Pilot with one OEM candidate","Joint technical evaluation."],
+  [6,"Partners","Review partner productivity","Cut inactive partners; invest in the top 10."],
+  [7,"Public sector","First tenders","Bid on Doffin tenders through framework partners."],
+  [7,"Certification","FIDO Level 2 obtained","Announce to partners and press."],
+  [8,"Cash and funding","Production order for H2","Order new cards at €68 ahead of autumn demand."],
+  [9,"Partners","Autumn ramp","Goal: 40 active partners."],
+  [10,"OEM","Negotiate terms","Volume commitment, price around €85, start mid-2028."],
+  [10,"Public sector","National rollout preparation","Position for a 2028 rollout of about 30,000 cards (needs CC or FIPS progress)."],
+  [11,"Large accounts","Close Q4 deals","Year-end budgets; target six large deals in 2027."],
+  [12,"OEM","Sign the OEM contract","Deliveries from July 2028."],
+  [13,"Team","2028 hiring","Second channel manager and third enterprise seller."],
+  [13,"Cash and funding","Year-end check","Compare cards, partners and revenue with the monthly targets below; adjust 2028."]
+ ]};
+const PLANS=[...(typeof PLAN_PERSO!=='undefined'?[PLAN_PERSO]:[]),PLAN_COM,PLAN_OBJ];
+let planK=PLANS.find(p=>p.k==='com')?'com':PLANS[0].k;
+let planDone={}; try{planDone=JSON.parse(localStorage.getItem('plan-done')||'{}')}catch(e){}
+function renderPlan(){
+  const P=PLANS.find(p=>p.k===planK);
+  $('plan-tabs').innerHTML=PLANS.map(p=>{const n=p.items.length,d=p.items.filter((it,i)=>planDone[p.k+i]).length;return `<button type="button" role="tab" aria-selected="${p.k===planK}" aria-checked="${p.k===planK}" data-k="${p.k}" class="tier" style="border-top:4px solid var(--${p.c})"><b>${p.n}</b><span class="num" style="font-size:16px">${d} / ${n} done</span><small>${esc(p.goal)}</small></button>`}).join('');
+  $('plan-summary').innerHTML=`<h3 style="font-size:16px">${esc(P.n)}: the goal</h3><p style="margin:0">${esc(P.goal)}</p><div class="kpis">${P.kpis.map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('')}</div>`+
+    (P.k==='com'?`<p class="muted" style="margin:0;font-size:12.5px">Monthly budget (recommended plan, €k): ${P.budget.map((b,i)=>`${PM[i].split(' ')[0]} ${b}`).join(' · ')} = €${P.budget.reduce((a,b)=>a+b,0)}k</p>`:'')+
+    (P.k==='obj'?`<div style="overflow-x:auto"><table class="reg" id="obj-targets"></table></div><p class="muted" style="margin:0;font-size:12.5px">Monthly targets come from the €20M plan in the Optimisation section (Revenue target risk tab). Change the sliders there and these numbers follow.</p>`:'');
+  if(P.k==='obj'){const R=optCalc(OPT_DEF), f=t=>t/35;
+    $('obj-targets').innerHTML=`<thead><tr><th>2027</th>${R.rows.slice(0,12).map(r=>`<th>${r.date.toLocaleString('en',{month:'short'})}</th>`).join('')}</tr></thead><tbody>
+      <tr><td>Active partners</td>${R.rows.slice(0,12).map((r,t)=>`<td class="mono">${Math.round(23+(OPT_DEF.p1-23)*f(t))}</td>`).join('')}</tr>
+      <tr><td>Cards sold</td>${R.rows.slice(0,12).map(r=>`<td class="mono">${Math.round(r.cards).toLocaleString('en')}</td>`).join('')}</tr>
+      <tr><td>Revenue</td>${R.rows.slice(0,12).map(r=>`<td class="mono">${eur(ENG.reduce((s,e)=>s+r[e.k],0)/1e6)}</td>`).join('')}</tr></tbody>`;}
+  // Gantt
+  $('plan-gantt').innerHTML=`<thead><tr><th></th>${PM.map(m=>`<th>${m.split(' ')[0]}<br><span class="muted">${m.split(' ')[1]}</span></th>`).join('')}</tr></thead><tbody>${P.ws.map(w=>`<tr><th scope="row">${esc(w)}</th>${PM.map((m,i)=>{const its=P.items.filter(it=>it[0]===i&&it[1]===w);return `<td>${its.length?`<i class="pg" data-tip="${esc(`<b>${w} · ${m}</b>`+its.map(it=>`<div>• ${esc(it[2])}</div>`).join(''))}" style="background:var(--${P.c})"></i>`:''}</td>`}).join('')}</tr>`).join('')}</tbody>`;
+  // Calendar
+  const cal=P.k==='obj'?CAL.filter(c=>/budget|Resilience|wallet|SMS/.test(c[2])):CAL;
+  $('plan-calendar').innerHTML=`<h3 style="font-size:16px">Calendar to plan around</h3><div style="overflow-x:auto"><table class="reg"><thead><tr><th>When</th><th>Event</th><th>Where</th><th>Status</th><th>What Pone does</th></tr></thead><tbody>${cal.map(c=>`<tr><td class="mono">${c[1]}</td><td><b>${esc(c[2])}</b></td><td>${c[3]}</td><td><span class="pill ${c[4]==='confirmed'?'p-good':'p-mid'}">${c[4]}</span></td><td>${esc(c[5])}</td></tr>`).join('')}</tbody></table></div>`;
+  // Month by month
+  $('plan-months').innerHTML=PM.map((m,i)=>{const its=P.items.map((it,j)=>[it,j]).filter(([it])=>it[0]===i);const ev=(P.k==='obj'?cal:CAL).filter(c=>c[0]===i);if(!its.length&&!ev.length)return '';
+    return `<div class="card" style="display:grid;gap:8px"><div style="display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline"><h3 style="font-size:17px">${m}</h3>${P.k==='com'?`<span class="pill p-na">budget €${P.budget[i]}k</span>`:''}${ev.map(c=>`<span class="pill ${c[4]==='confirmed'?'p-good':'p-mid'}" title="${esc(c[1]+' · '+c[3]+' · '+c[5])}">${esc(c[2].split(' (')[0])}</span>`).join('')}</div>
+      ${its.map(([it,j])=>`<label class="plan-item${planDone[P.k+j]?' done':''}"><input type="checkbox" data-id="${P.k+j}"${planDone[P.k+j]?' checked':''}><span><b>${esc(it[2])}</b> <span class="pill p-na">${esc(it[1])}</span><br><span class="muted">${esc(it[3])}</span></span></label>`).join('')}</div>`}).join('');
+}
+$('plan-tabs').addEventListener('click',e=>{const b=e.target.closest('.tier');if(!b)return;planK=b.dataset.k;renderPlan()});
+$('plan-months').addEventListener('change',e=>{if(e.target.type!=='checkbox')return;planDone[e.target.dataset.id]=e.target.checked;try{localStorage.setItem('plan-done',JSON.stringify(planDone))}catch(err){}e.target.closest('.plan-item').classList.toggle('done',e.target.checked);const P=PLANS.find(p=>p.k===planK);const d=P.items.filter((it,i)=>planDone[P.k+i]).length;const b=$('plan-tabs').querySelector(`[data-k="${planK}"] .num`);if(b)b.textContent=`${d} / ${P.items.length} done`});
+$('plan-gantt').addEventListener('pointermove',e=>{const c=e.target.closest('.pg');if(c)showTip(e,c.dataset.tip);else hideTip()});
+$('plan-gantt').addEventListener('pointerleave',hideTip);
 
 /* ======================= LINKEDIN A–Z ======================= */
 const LI=[
