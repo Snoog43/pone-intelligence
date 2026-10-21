@@ -242,8 +242,8 @@ table.reg{border-collapse:collapse;width:100%;min-width:760px}
   <div class="inner">
     <div>
       <div class="eyebrow">Monte Carlo simulation · 20,000 scenarios</div>
-      <h2 style="font-size:24px">Can Pone reach NOK 20M revenue over the next two years?</h2>
-      <p class="lede">The model starts from Pone's filed accounts: NOK 3.19M operating revenue in 2025, with 2024 and 2023 below that. It then simulates 2027 and 2028 with uncertain growth, occasional large deals and the main risks found in the research. Every assumption below can be changed and the result updates.</p>
+      <h2 style="font-size:24px">Can Pone reach €20M revenue over the next three years?</h2>
+      <p class="lede">The model starts from Pone's filed accounts: NOK 3.19M operating revenue in 2025, about €0.27M. It then simulates 2027, 2028 and 2029 with uncertain growth, occasional large deals, rare very large contracts and the main risks found in the research. All amounts are in euros. Every assumption below can be changed and the result updates.</p>
     </div>
 
     <div class="card verdict-box">
@@ -260,20 +260,23 @@ table.reg{border-collapse:collapse;width:100%;min-width:760px}
         <div class="ctl"><label for="target">Revenue target</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <input type="number" id="target" value="20" min="1" step="1">
-            <select id="cur"><option value="NOK" selected>NOK million</option><option value="EUR">EUR million</option></select>
+            <select id="cur"><option value="EUR" selected>EUR million</option><option value="NOK">NOK million</option></select>
           </div>
-          <small>Your figure of 20 million did not say which currency. Pone reports in NOK, so NOK is the default. In EUR, the target is about 11.7 times larger.</small></div>
+          <small>€20M is about NOK 234M at roughly 11.7 NOK per euro.</small></div>
         <div class="ctl"><label for="mode">How the target is counted</label>
-          <select id="mode"><option value="cum" selected>Total of 2027 + 2028</option><option value="y2">2028 revenue alone</option></select></div>
+          <select id="mode"><option value="cum" selected>Total of 2027 + 2028 + 2029</option><option value="last">2029 revenue alone</option></select></div>
         <div class="ctl"><label for="b26">2026 revenue, best guess <output id="o-b26"></output></label>
-          <input type="range" id="b26" min="2" max="10" step="0.5" value="4">
-          <small>No 2026 figures are public yet. 2025 was NOK 3.19M. The model spreads this guess from −25% to +50%.</small></div>
+          <input type="range" id="b26" min="0.15" max="1.5" step="0.05" value="0.35">
+          <small>No 2026 figures are public yet. 2025 was about €0.27M (NOK 3.19M). The model spreads this guess from −25% to +50%.</small></div>
         <div class="ctl"><label for="g">Underlying growth per year <output id="o-g"></output></label>
           <input type="range" id="g" min="0" max="150" step="5" value="45">
           <small>The FIDO2 key market grows about 18–20% a year. Yubico grew 1.4% underlying in 2025. A partner network of 27 resellers adds room on top.</small></div>
         <div class="ctl"><label for="lam">Large deals per year <output id="o-lam"></output></label>
           <input type="range" id="lam" min="0" max="4" step="0.1" value="0.8">
-          <small>Deals of roughly 2,000 cards (median NOK 2M). No named enterprise or public-sector customer has been found so far.</small></div>
+          <small>Deals of roughly 2,000 cards (median about €0.17M). No named enterprise or public-sector customer has been found so far.</small></div>
+        <div class="ctl"><label for="pMega">Chance per year of a very large contract <output id="o-pMega"></output></label>
+          <input type="range" id="pMega" min="0" max="40" step="1" value="5">
+          <small>An OEM / white-label deal or a national rollout of about 30,000 cards (median €3M). Speculative: nothing of this size is in sight in public sources.</small></div>
         <div class="ctl"><label for="pFund">Chance of a funding squeeze <output id="o-pFund"></output></label>
           <input type="range" id="pFund" min="0" max="80" step="5" value="30">
           <small>Cash was NOK 132k at the end of 2025. If funding tightens, growth is cut by 60% and large deals by 40%.</small></div>
@@ -301,6 +304,19 @@ table.reg{border-collapse:collapse;width:100%;min-width:760px}
         <div class="card">
           <h3 style="font-size:16px">What has to be true</h3>
           <div class="math" id="math"></div>
+        </div>
+        <div class="card" style="display:grid;gap:10px">
+          <h3 style="font-size:16px">Four ways €20M could still be reached</h3>
+          <p class="muted" style="margin:0">Selling cards one deal at a time will not get there. Each route below is a different company from today's, and each needs money raised before the revenue arrives.</p>
+          <div style="overflow-x:auto"><table class="reg">
+            <thead><tr><th>Route</th><th>What it takes over three years</th><th>Today</th></tr></thead>
+            <tbody>
+              <tr><td><b>Volume through partners</b></td><td>About 204,000 cards at ~€98 net each, or about 68,000 a year</td><td>About 2,800 cards sold in 2025 through 27 resellers</td></tr>
+              <tr><td><b>Subscription</b></td><td>About 93,000 users paying €6 a month for all three years, hardware included</td><td>Support plan at €2 per unit per month; no subscription base disclosed</td></tr>
+              <tr><td><b>OEM / white-label</b></td><td>One or two large vendors selling OFFPAD under their brand, e.g. an identity group or a card maker, at 50,000+ units a year</td><td>No OEM agreement found. Note that IDEX already sells its own card</td></tr>
+              <tr><td><b>National or defence rollout</b></td><td>A government, defence or large-enterprise programme of 50,000–100,000 cards, which needs FIDO L2 and Common Criteria or FIPS</td><td>FIDO L1 only; certifications planned; no public-sector customer named</td></tr>
+            </tbody>
+          </table></div>
         </div>
         <div class="card">
           <h3 style="font-size:16px;margin-bottom:8px">Risk register</h3>
@@ -611,10 +627,14 @@ const REP={
 })();
 
 /* ======================= RISK (Monte Carlo) ======================= */
-const DEF={b26:4,g:45,lam:0.8,pFund:30,pPrice:50,pCert:40,pSupply:12,pTail:50,target:20,cur:"NOK",mode:"cum"};
-const EURNOK=11.7; // approximate rate, used only to convert a EUR target
+// All amounts in EUR million. Pone reports in NOK; 2025 = NOK 3.19M ≈ €0.27M.
+const DEF={b26:0.35,g:45,lam:0.8,pMega:5,pFund:30,pPrice:50,pCert:40,pSupply:12,pTail:50,target:20,cur:"EUR",mode:"cum"};
+const EURNOK=11.7; // approximate rate
+const CARD_EUR=98;  // ~NOK 1,150 net per card
+const YEARS=[2027,2028,2029];
 const $=id=>document.getElementById(id);
-const fmt={b26:v=>`NOK ${(+v).toFixed(1)}M`,g:v=>`${v}%`,lam:v=>(+v).toFixed(1),pFund:v=>`${v}%`,pPrice:v=>`${v}%`,pCert:v=>`${v}%`,pSupply:v=>`${v}%`,pTail:v=>`${v}%`};
+const eur=v=>v<1?`€${Math.round(v*1000)}k`:`€${v.toFixed(v<10?1:0)}M`;
+const fmt={b26:v=>eur(+v),g:v=>`${v}%`,lam:v=>(+v).toFixed(1),pMega:v=>`${v}%`,pFund:v=>`${v}%`,pPrice:v=>`${v}%`,pCert:v=>`${v}%`,pSupply:v=>`${v}%`,pTail:v=>`${v}%`};
 let seed=1;
 function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 function normal(m,s){let u=0,v=0;while(!u)u=rand();while(!v)v=rand();return m+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
@@ -623,20 +643,21 @@ function poisson(l){const L=Math.exp(-l);let k=0,p=1;do{k++;p*=rand()}while(p>L)
 function read(){const P={};Object.keys(fmt).forEach(k=>P[k]=+$(k).value);P.target=+$('target').value||0;P.cur=$('cur').value;P.mode=$('mode').value;return P}
 function run(P,N=20000){
   seed=12345;
-  const out=new Float64Array(N); let hits={fund:0,price:0,cert:0,supply:0,tail:0};
+  const out=new Float64Array(N);
   const failWith={fund:0,price:0,cert:0,supply:0}, cnt={fund:0,price:0,cert:0,supply:0};
-  const tgt=P.cur==='EUR'?P.target*EURNOK:P.target;
+  const tgt=P.cur==='NOK'?P.target/EURNOK:P.target;
   for(let i=0;i<N;i++){
     const base=tri(P.b26*.75,P.b26,P.b26*1.5);
     const ev={fund:rand()<P.pFund/100,price:rand()<P.pPrice/100,cert:rand()<P.pCert/100,supply:rand()<P.pSupply/100,tail:rand()<P.pTail/100};
-    const supplyYear=rand()<.5?0:1;
+    const supplyYear=Math.floor(rand()*YEARS.length), pf=ev.price?.8:1;
     let rev=base,tot=0,last=0;
-    for(let y=0;y<2;y++){
+    for(let y=0;y<YEARS.length;y++){
       let gr=normal(P.g/100,.3); if(ev.tail&&y===0)gr+=.25; if(ev.fund)gr*=.4;
-      rev=Math.max(.3,rev*(1+gr));
-      let r=rev*(ev.price?.8:1);
-      const lam=P.lam*(ev.cert?.5:1)*(ev.fund?.6:1), n=poisson(lam);
-      for(let d=0;d<n;d++) r+=2*Math.exp(normal(0,.6))*(ev.price?.8:1);
+      rev=Math.max(.025,rev*(1+gr));
+      let r=rev*pf;
+      const lam=P.lam*(ev.cert?.5:1)*(ev.fund?.6:1);
+      for(let d=0,n=poisson(lam);d<n;d++) r+=.17*Math.exp(normal(0,.6))*pf;
+      if(rand()<P.pMega/100*(ev.cert?.5:1)*(ev.fund?.6:1)) r+=3*Math.exp(normal(0,.5))*pf;
       if(ev.supply&&y===supplyYear) r*=.5;
       tot+=r; last=r;
     }
@@ -646,50 +667,55 @@ function run(P,N=20000){
   return {out,tgt,failWith,cnt,N};
 }
 function quant(a,q){const s=Array.from(a).sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.floor(q*s.length))]}
+// Constant yearly growth x such that the target is met with no large deals
+function needed(tgt,b,mode){
+  const f=x=>mode==='cum'?x+x*x+x*x*x:x*x*x, goal=tgt/b; let lo=0,hi=100;
+  for(let i=0;i<80;i++){const m=(lo+hi)/2; f(m)<goal?lo=m:hi=m;} return lo-1;
+}
 function simulate(){
   const P=read(); Object.keys(fmt).forEach(k=>$('o-'+k).textContent=fmt[k]($(k).value));
   const {out,tgt,failWith,cnt,N}=run(P);
   const p=Array.from(out).filter(v=>v>=tgt).length/N;
   const med=quant(out,.5), lo=quant(out,.1), hi=quant(out,.9);
   // Gauge
-  const pct=Math.round(p*100), color=p>=.6?col('pos'):p>=.3?col('gap'):col('neg');
+  const pct=p*100, shown=pct<1?(pct>0?'<1':'0'):Math.round(pct), color=p>=.6?col('pos'):p>=.3?col('gap'):col('neg');
   const a=Math.PI*2*p, x=70+56*Math.sin(a), y=70-56*Math.cos(a);
   $('gauge').innerHTML=`<circle cx="70" cy="70" r="56" fill="none" stroke="${col('sunk')}" stroke-width="14"/>`+
-    (p>=.999?`<circle cx="70" cy="70" r="56" fill="none" stroke="${color}" stroke-width="14"/>`:p>0?`<path d="M70 14 A56 56 0 ${a>Math.PI?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}" fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round"/>`:'')+
-    `<text x="70" y="72" text-anchor="middle" font-family="Sora,sans-serif" font-size="30" font-weight="650" fill="${col('fg')}">${pct}%</text><text x="70" y="94" text-anchor="middle" font-size="11" fill="${col('muted')}">chance</text>`;
-  const label=P.mode==='cum'?'over 2027 and 2028 combined':'in 2028 alone';
-  const tgtTxt=P.cur==='EUR'?`EUR ${P.target}M (≈ NOK ${Math.round(tgt)}M)`:`NOK ${P.target}M`;
-  $('verdict').textContent = p>=.6?`Likely: ${pct}% chance of reaching ${tgtTxt} ${label}`: p>=.3?`Possible but not the base case: ${pct}% chance of ${tgtTxt} ${label}`: p>=.05?`Unlikely without a step change: ${pct}% chance of ${tgtTxt} ${label}`:`Out of reach on current trajectory: ${pct<1?'<1':pct}% chance of ${tgtTxt} ${label}`;
-  $('verdict-sub').textContent=`The middle outcome is NOK ${med.toFixed(1)}M. In 8 scenarios out of 10, revenue lands between NOK ${lo.toFixed(1)}M and NOK ${hi.toFixed(1)}M.`;
-  const need=P.mode==='cum'?(-1+Math.sqrt(1+4*tgt/P.b26))/2-1:Math.sqrt(tgt/P.b26)-1;
+    (p>=.999?`<circle cx="70" cy="70" r="56" fill="none" stroke="${color}" stroke-width="14"/>`:p>.005?`<path d="M70 14 A56 56 0 ${a>Math.PI?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}" fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round"/>`:'')+
+    `<text x="70" y="72" text-anchor="middle" font-family="Sora,sans-serif" font-size="30" font-weight="650" fill="${col('fg')}">${shown}%</text><text x="70" y="94" text-anchor="middle" font-size="11" fill="${col('muted')}">chance</text>`;
+  const label=P.mode==='cum'?'over 2027–2029 combined':'in 2029 alone';
+  const tgtTxt=P.cur==='NOK'?`NOK ${P.target}M (≈ ${eur(tgt)})`:`€${P.target}M`;
+  $('verdict').textContent = p>=.6?`Likely: ${shown}% chance of reaching ${tgtTxt} ${label}`: p>=.3?`Possible but not the base case: ${shown}% chance of ${tgtTxt} ${label}`: p>=.05?`Unlikely without a step change: ${shown}% chance of ${tgtTxt} ${label}`:`Out of reach on the current trajectory: ${shown}% chance of ${tgtTxt} ${label}`;
+  $('verdict-sub').textContent=`The middle outcome is ${eur(med)}, about ${Math.max(1,Math.round(tgt/med))} times below the target. In 8 scenarios out of 10, revenue lands between ${eur(lo)} and ${eur(hi)}.`;
+  const need=needed(tgt,P.b26,P.mode), yrs=P.mode==='cum'?3:1;
   $('kpis').innerHTML=[
-    [`NOK ${med.toFixed(1)}M`,'median outcome'],
-    [`NOK ${lo.toFixed(1)}–${hi.toFixed(1)}M`,'80% range'],
+    [eur(med),'median outcome'],
+    [`${eur(lo)}–${eur(hi)}`,'80% range'],
     [`${Math.round(need*100)}% / yr`,'growth needed with no large deals'],
-    [`${(tgt/(P.mode==='cum'?2:1)/1.15*1000).toFixed(0)}`,'cards a year at ~NOK 1,150 net each']
+    [`${Math.round(tgt*1e6/CARD_EUR/yrs).toLocaleString('en')}`,`cards a year at ~€${CARD_EUR} net each`]
   ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
   // Histogram
   const el=$('hist'), W=el.clientWidth||600, H=240, m={l:44,r:12,t:10,b:30};
-  const xmax=Math.max(quant(out,.99),tgt*1.15);
+  const xmax=Math.max(quant(out,.995),tgt*1.1);
   const xs=d3.scaleLinear().domain([0,xmax]).range([m.l,W-m.r]);
-  const bins=d3.bin().domain([0,xmax]).thresholds(40)(Array.from(out).filter(v=>v<=xmax));
+  const bins=d3.bin().domain([0,xmax]).thresholds(60)(Array.from(out).filter(v=>v<=xmax));
   const ys=d3.scaleLinear().domain([0,d3.max(bins,b=>b.length)]).nice().range([H-m.b,m.t]);
   const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
   s.append('g').selectAll('line').data(ys.ticks(4)).join('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',d=>ys(d)).attr('y2',d=>ys(d)).attr('stroke',col('line')).attr('stroke-dasharray','2 3');
-  s.append('g').selectAll('rect').data(bins).join('rect').attr('x',b=>xs(b.x0)+1).attr('width',b=>Math.max(0,xs(b.x1)-xs(b.x0)-1)).attr('y',b=>ys(b.length)).attr('height',b=>ys(0)-ys(b.length)).attr('rx',2)
-    .attr('fill',b=>b.x0>=tgt?col('pos'):col('accent')).attr('fill-opacity',b=>b.x0>=tgt?.9:.55);
+  s.append('g').selectAll('rect').data(bins).join('rect').attr('x',b=>xs(b.x0)+1).attr('width',b=>Math.max(1,xs(b.x1)-xs(b.x0)-1)).attr('y',b=>ys(b.length)).attr('height',b=>ys(0)-ys(b.length)).attr('rx',2)
+    .attr('fill',b=>b.x0>=tgt?col('pos'):col('accent')).attr('fill-opacity',b=>b.x0>=tgt?.9:.6);
   s.append('line').attr('x1',xs(tgt)).attr('x2',xs(tgt)).attr('y1',m.t).attr('y2',H-m.b).attr('stroke',col('fg')).attr('stroke-width',1.5).attr('stroke-dasharray','5 4');
-  s.append('text').attr('x',Math.min(xs(tgt)+6,W-110)).attr('y',m.t+12).style('fill',col('fg')).style('font-weight',600).text(`Target NOK ${Math.round(tgt)}M`);
-  s.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(xs).ticks(6).tickFormat(d=>`${d}M`)).call(a=>a.select('.domain').attr('stroke',col('line'))).call(a=>a.selectAll('line').attr('stroke',col('line')));
+  s.append('text').attr('x',Math.max(m.l,Math.min(xs(tgt)-6,W-m.r))).attr('text-anchor','end').attr('y',m.t+12).style('fill',col('fg')).style('font-weight',600).text(`Target ${eur(tgt)}`);
+  s.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(xs).ticks(6).tickFormat(d=>`€${d}M`)).call(a=>a.select('.domain').attr('stroke',col('line'))).call(a=>a.selectAll('line').attr('stroke',col('line')));
   s.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(ys).ticks(4).tickFormat(d=>(d/N*100).toFixed(0)+'%')).call(a=>a.select('.domain').remove()).call(a=>a.selectAll('line').remove());
   // What has to be true
-  const y1=P.mode==='cum'?tgt/(1+(1+need)):0;
+  const path=YEARS.map((yr,i)=>`${yr} ≈ ${eur(P.b26*(1+need)**(i+1))}`).join(', ');
   $('math').innerHTML=P.mode==='cum'
-    ?`2026 base (your guess) ......... NOK ${P.b26.toFixed(1)}M<br>Target, 2027 + 2028 ............ NOK ${tgt.toFixed(0)}M<br>Growth needed every year ....... ${Math.round(need*100)}%  →  2027 ≈ NOK ${(P.b26*(1+need)).toFixed(1)}M, 2028 ≈ NOK ${(P.b26*(1+need)**2).toFixed(1)}M<br>Cards to sell over two years ... ≈ ${Math.round(tgt/1.15*1000).toLocaleString('en')} at ~NOK 1,150 net per card<br>2025 for comparison ............ NOK 3.19M ≈ ${Math.round(3.19/1.15*1000).toLocaleString('en')} cards`
-    :`2026 base (your guess) ......... NOK ${P.b26.toFixed(1)}M<br>Target, 2028 alone ............. NOK ${tgt.toFixed(0)}M<br>Growth needed every year ....... ${Math.round(need*100)}%<br>Cards to sell in 2028 .......... ≈ ${Math.round(tgt/1.15*1000).toLocaleString('en')} at ~NOK 1,150 net per card`;
+    ?`2026 base (your guess) ......... ${eur(P.b26)}<br>Target, 2027 + 2028 + 2029 ..... ${eur(tgt)}<br>Growth needed every year ....... ${Math.round(need*100)}%  →  ${path}<br>Cards to sell over three years . ≈ ${Math.round(tgt*1e6/CARD_EUR).toLocaleString('en')} at ~€${CARD_EUR} net per card<br>2025 for comparison ............ €0.27M ≈ 2,800 cards`
+    :`2026 base (your guess) ......... ${eur(P.b26)}<br>Target, 2029 alone ............. ${eur(tgt)}<br>Growth needed every year ....... ${Math.round(need*100)}%  →  ${path}<br>Cards to sell in 2029 .......... ≈ ${Math.round(tgt*1e6/CARD_EUR).toLocaleString('en')} at ~€${CARD_EUR} net per card`;
   // Risk register
   const R=[
-   ["fund","Funding squeeze","Cash NOK 132k at end 2025; Finansavisen reported money running short (Dec 2025).","Raise 18–24 months of runway before pushing sales; use partner rent-to-own to bring cash forward."],
+   ["fund","Funding squeeze","Cash NOK 132k at end 2025; Finansavisen reported money running short (Dec 2025).","Raise money sized for the target before pushing sales; use partner rent-to-own to bring cash forward."],
    ["price","Price pressure","OFFPAD+ €155 vs YubiKey C Bio €98, Swissbit €26–55, battery-free biometric cards ~$20–39.","Sell on the display and approval use case, bundle hardware into a subscription."],
    ["cert","Certification gap","FIDO L1 only; IDEX and Yubico are L2, FIPS / CC still planned.","Start FIDO L2 now; pick CC or FIPS based on the first big tender."],
    ["supply","Sensor supply","IDEX is the sole sensor supplier, had negative solvency in 2025 and competes with its own card.","Secure a last-time-buy clause and buffer stock; qualify a second sensor source."],
@@ -709,8 +735,8 @@ addEventListener('resize',()=>{if(!$('v-risk').hidden)schedule()});
 /* ======================= ADVICE ======================= */
 const ADV=[
  {ph:"Next 90 days",t:"Secure 18–24 months of runway before anything else",tags:[["Finance","p-bad"],["Critical","p-bad"]],
-  d:"Close a round sized for two years of sales effort, not the next quarter. Use partner rent-to-own deals and the €2 per unit per month support plan to bring cash forward. Turn the NOK 5.2M of inventory into sales with a partner promotion.",
-  e:"Cash NOK 132k against NOK 13.9M short-term debt at end 2025 (Brønnøysund). Finansavisen reported money running short in Dec 2025. In the risk model, a funding squeeze is the single biggest reason the NOK 20M target is missed."},
+  d:"Close a round sized for the three-year plan, not the next quarter. Use partner rent-to-own deals and the €2 per unit per month support plan to bring cash forward. Turn the NOK 5.2M of inventory into sales with a partner promotion.",
+  e:"Cash NOK 132k against NOK 13.9M short-term debt at end 2025 (Brønnøysund). Finansavisen reported money running short in Dec 2025. In the risk model, every route to a €20M target needs capital raised ahead of the revenue."},
  {ph:"Next 90 days",t:"Protect the sensor supply from IDEX",tags:[["Supply chain","p-bad"],["Critical","p-bad"]],
   d:"Negotiate a supply agreement with a last-time-buy right, minimum allocation and source-code or design escrow. Build a 6–9 month buffer of sensors. Start qualifying a second sensor supplier.",
   e:"IDEX is Pone's only sensor supplier. It had negative solvency at end 2025 and burns ~NOK 20M a quarter. Since 2026 it sells its own FIDO2 card into the same Norwegian public-sector tenders."},
