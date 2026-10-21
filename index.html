@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pone Market Intelligence</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;650&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f5f7f8; --surface:#fff; --sunk:#eef2f4; --fg:#17212b; --muted:#5b6876; --line:#cdd6de;
+  --accent:#1f5f8b; --accent-bg:#e2edf5; --pos:#2f7d4f; --pos-bg:#e3f1e8; --neg:#b03a2e; --neg-bg:#f7e4e1;
+  --neu:#6a7480; --neu-bg:#e9edf0; --gap:#a5801d; --gap-bg:#f4ecd6;
+  --c-pone:#1f5f8b; --c-yub:#5b8c2a; --c-idex:#8a4fb0; --c-swiss:#c0392b;
+  --f-display:"Sora",system-ui,sans-serif; --f-body:"Public Sans",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#10161c; --surface:#182129; --sunk:#141c23; --fg:#e4eaef; --muted:#97a4b0; --line:#2f3c48;
+  --accent:#6fb0dc; --accent-bg:#1b2c3a; --pos:#6cc391; --pos-bg:#1b3326; --neg:#ef8a7e; --neg-bg:#3a1f1c;
+  --neu:#a3adb7; --neu-bg:#232e38; --gap:#e0c26e; --gap-bg:#352d17;
+  --c-pone:#6fb0dc; --c-yub:#9ccc65; --c-idex:#c39be0; --c-swiss:#ef8a7e; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.55 var(--f-body);display:grid;grid-template-rows:auto auto 1fr;overflow:hidden}
+header{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--surface)}
+h1{font:650 19px var(--f-display);margin:0}
+h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px}
+nav.tabs{display:flex;gap:2px;padding:0 12px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto}
+nav.tabs button{font:600 13.5px var(--f-body);background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+nav.tabs button:hover{color:var(--fg)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.view{min-height:0}
+.page{overflow:auto;height:100%}
+.inner{max-width:1180px;margin:0 auto;padding:28px 20px 64px;display:grid;gap:24px}
+.lede{color:var(--muted);max-width:80ch;margin:6px 0 0}
+.eyebrow{font:500 11.5px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono)}
+.num{font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font:500 11px var(--f-mono);padding:2px 8px;border-radius:999px;white-space:nowrap}
+.p-good{background:var(--pos-bg);color:var(--pos)} .p-bad{background:var(--neg-bg);color:var(--neg)} .p-mid{background:var(--gap-bg);color:var(--gap)} .p-na{background:var(--neu-bg);color:var(--neu)}
+a{color:var(--accent)}
+
+/* Tree view */
+#v-tree{display:grid;grid-template-columns:1fr 360px;min-height:0;height:100%}
+#stage{position:relative;min-width:0;overflow:hidden}
+#svg{width:100%;height:100%;display:block;cursor:grab}
+.tree-controls{position:absolute;top:12px;left:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:500 13px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:6px 12px;border-radius:999px;cursor:pointer}
+.btn:hover{border-color:var(--fg)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.link{fill:none;stroke:var(--line);stroke-width:1.6}
+.node circle{stroke:var(--bg);stroke-width:2;cursor:pointer}
+.node text{fill:var(--fg);font-family:var(--f-body);paint-order:stroke;stroke:var(--bg);stroke-width:4px;stroke-linejoin:round;cursor:pointer}
+.node.d0 text{font:650 17px var(--f-display)} .node.d1 text{font:650 15px var(--f-display)}
+.node.d2 text{font-size:13.5px;font-weight:500} .node.d3 text{font-size:12px;fill:var(--muted)}
+.node .badge{font:500 11px var(--f-mono);fill:var(--muted)}
+.node.sel text{text-decoration:underline}
+#panel{border-left:1px solid var(--line);background:var(--surface);overflow:auto;padding:20px;display:grid;align-content:start;gap:12px}
+#panel h2{font-size:17px}
+#panel .tone{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em}
+#panel p{margin:0}
+.cards{display:grid;gap:8px;list-style:none;margin:0;padding:0}
+.cards li{border:1px solid var(--line);border-radius:6px;padding:10px 12px;display:grid;gap:4px}
+.cards a{font-weight:600;font-size:13px}
+.meta{font:11.5px var(--f-mono);color:var(--muted)}
+.hint{position:absolute;left:16px;bottom:12px;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+
+/* Comparison */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table.cmp{border-collapse:collapse;width:100%;min-width:960px}
+.cmp th,.cmp td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+.cmp thead th{position:sticky;top:0;background:var(--surface);z-index:1;font:650 14px var(--f-display);border-bottom:2px solid var(--line)}
+.cmp thead th .co{display:flex;align-items:center;gap:8px}
+.cmp thead th .co i{width:10px;height:10px;border-radius:50%}
+.cmp thead th small{display:block;font:400 12px var(--f-body);color:var(--muted);margin-top:2px}
+.cmp tbody th{font-weight:600;color:var(--muted);font-size:13px;width:170px;background:var(--sunk)}
+.cmp tr.grp th{background:var(--accent-bg);color:var(--fg);font:650 13px var(--f-display);letter-spacing:.02em}
+.cmp td{font-size:13.5px}
+.cmp td.best{background:var(--pos-bg)}
+.cmp td.worst{background:var(--neg-bg)}
+.cmp td.pone{box-shadow:inset 3px 0 0 var(--c-pone)}
+.keyrow{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.keyrow span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px;background:var(--b)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.swot h3{font-size:15px;margin-bottom:6px}
+.swot ul{margin:0;padding-left:18px;display:grid;gap:4px}
+
+/* Reputation */
+.scoreboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.score{display:grid;gap:10px}
+.score .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.score .big{font:650 40px var(--f-display);font-variant-numeric:tabular-nums;line-height:1}
+.score .big small{font-size:15px;color:var(--muted)}
+.comp{display:grid;grid-template-columns:1fr 54px;gap:3px 10px;align-items:center;font-size:12.5px}
+.comp .bar{grid-column:1/-1;height:6px;background:var(--sunk);border-radius:3px;overflow:hidden;margin-bottom:5px}
+.comp .bar i{display:block;height:100%}
+.comp .v{text-align:right;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+table.method{border-collapse:collapse;width:100%;min-width:900px}
+.method th,.method td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top;font-size:13px}
+.method thead th{font:650 13px var(--f-display);background:var(--sunk)}
+.method td .s{font:600 13px var(--f-mono)}
+
+/* Risk */
+.risk-grid{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
+.controls-card{display:grid;gap:14px}
+.ctl{display:grid;gap:4px}
+.ctl label{font-size:13px;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.ctl label output{font:500 12.5px var(--f-mono);color:var(--accent)}
+.ctl small{color:var(--muted);font-size:11.5px;line-height:1.4}
+.ctl input[type=range]{width:100%;accent-color:var(--accent)}
+.ctl select,.ctl input[type=number]{font:500 13px var(--f-body);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);width:100%}
+.verdict-box{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.gauge{width:140px;height:140px}
+.verdict-box h2{font-size:20px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--sunk);border-radius:6px;padding:10px 12px}
+.kpi b{display:block;font:650 20px var(--f-display);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+#hist{width:100%;height:240px;display:block}
+#hist text{fill:var(--muted);font:11px var(--f-mono)}
+table.reg{border-collapse:collapse;width:100%;min-width:760px}
+.reg th,.reg td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top;font-size:13px}
+.reg thead th{font:650 13px var(--f-display);background:var(--sunk)}
+.math{background:var(--sunk);border-radius:6px;padding:12px 14px;font:12.5px/1.7 var(--f-mono);overflow-x:auto}
+
+/* Advice */
+.advice{display:grid;gap:12px;counter-reset:a}
+.adv{display:grid;grid-template-columns:44px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px}
+.adv .n{font:650 22px var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.adv h3{font-size:16px}
+.adv .tags{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.adv p{margin:4px 0 0}
+.adv .ev{font-size:12.5px;color:var(--muted);border-left:2px solid var(--line);padding-left:10px;margin-top:8px}
+.phase{font:650 14px var(--f-display);margin-top:8px}
+
+
+
+@media (max-width:900px){#v-tree{grid-template-columns:1fr;grid-template-rows:1fr 40%}#panel{border-left:0;border-top:1px solid var(--line)}.risk-grid{grid-template-columns:1fr}.verdict-box{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Pone Biometrics · market intelligence</h1>
+    <div class="sub">Public sources gathered on 21 October 2026. Every figure links back to where it came from.</div>
+  </div>
+</header>
+<nav class="tabs" role="tablist" aria-label="Views">
+  <button role="tab" id="t-tree" aria-selected="true" data-v="tree">Perception tree</button>
+  <button role="tab" id="t-cmp" aria-selected="false" data-v="cmp">Competitor comparison</button>
+  <button role="tab" id="t-rep" aria-selected="false" data-v="rep">Reputation score</button>
+  <button role="tab" id="t-risk" aria-selected="false" data-v="risk">Revenue target risk</button>
+  <button role="tab" id="t-adv" aria-selected="false" data-v="adv">Advice</button>
+</nav>
+
+<!-- ============ TREE ============ -->
+<section class="view" id="v-tree" role="tabpanel">
+  <div id="stage">
+    <svg id="svg"></svg>
+    <div class="tree-controls">
+      <button class="btn" id="expand">Expand all</button>
+      <button class="btn" id="collapse">Collapse to themes</button>
+      <button class="btn" id="fit">Recenter</button>
+      <span class="legend"><span><i style="background:var(--pos)"></i>Praised</span><span><i style="background:var(--neg)"></i>Criticised</span><span><i style="background:var(--neu)"></i>Press</span><span><i style="background:var(--gap)"></i>Gaps</span></span>
+    </div>
+    <div class="hint">Click a node to open it · scroll to zoom · drag to pan</div>
+  </div>
+  <aside id="panel"></aside>
+</section>
+
+<!-- ============ COMPARISON ============ -->
+<section class="view page" id="v-cmp" role="tabpanel" hidden>
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Head to head · flagship product of each company</div>
+      <h2 style="font-size:24px">Pone vs Yubico vs IDEX vs Swissbit</h2>
+      <p class="lede">Each column compares the product that competes most directly with OFFPAD+. Prices are excluding VAT. Green marks the strongest value in a row, red the weakest. The Pone column has a blue edge.</p>
+    </div>
+    <div class="keyrow"><span style="--b:var(--pos-bg)">Best in row</span><span style="--b:var(--neg-bg)">Weakest in row</span></div>
+    <div class="tablewrap"><table class="cmp" id="cmp"></table></div>
+
+    <div>
+      <h2 style="font-size:19px">What each competitor has that Pone does not</h2>
+      <p class="lede">And what Pone has that none of them offer.</p>
+    </div>
+    <div class="grid2" id="swot"></div>
+  </div>
+</section>
+
+<!-- ============ REPUTATION ============ -->
+<section class="view page" id="v-rep" role="tabpanel" hidden>
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Reputation index · 0 to 100</div>
+      <h2 style="font-size:24px">How the market sees each company</h2>
+      <p class="lede">The score adds six signals found in public sources: independent reviews, visibility, press tone, trust and certifications, financial stability and employer ratings. Where no data exists the signal gets half marks and is flagged. Read it as a structured judgement built on the evidence below, not as a statistical measurement.</p>
+    </div>
+    <div class="scoreboard" id="scoreboard"></div>
+    <div class="card">
+      <h3 style="font-size:16px;margin-bottom:10px">Evidence behind each score</h3>
+      <div style="overflow-x:auto"><table class="method" id="method"></table></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:16px">Reading Pone's score</h3>
+      <p>Pone's reviews are good, and better than IDEX's or Swissbit's. The score is held back by things around the product: almost nobody writes about Pone, it holds only FIDO Level 1, and Finansavisen reported in December 2025 that money was running short. Visibility and certifications are the two fastest levers. Together they account for 29 of the 55 points Pone is missing.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RISK ============ -->
+<section class="view page" id="v-risk" role="tabpanel" hidden>
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Monte Carlo simulation · 20,000 scenarios</div>
+      <h2 style="font-size:24px">Can Pone reach NOK 20M revenue over the next two years?</h2>
+      <p class="lede">The model starts from Pone's filed accounts: NOK 3.19M operating revenue in 2025, with 2024 and 2023 below that. It then simulates 2027 and 2028 with uncertain growth, occasional large deals and the main risks found in the research. Every assumption below can be changed and the result updates.</p>
+    </div>
+
+    <div class="card verdict-box">
+      <svg class="gauge" id="gauge" viewBox="0 0 140 140" aria-label="Probability of reaching target"></svg>
+      <div style="display:grid;gap:10px">
+        <h2 id="verdict">…</h2>
+        <p class="muted" id="verdict-sub" style="margin:0"></p>
+        <div class="kpis" id="kpis"></div>
+      </div>
+    </div>
+
+    <div class="risk-grid">
+      <div class="card controls-card" id="controls">
+        <div class="ctl"><label for="target">Revenue target</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input type="number" id="target" value="20" min="1" step="1">
+            <select id="cur"><option value="NOK" selected>NOK million</option><option value="EUR">EUR million</option></select>
+          </div>
+          <small>Your figure of 20 million did not say which currency. Pone reports in NOK, so NOK is the default. In EUR, the target is about 11.7 times larger.</small></div>
+        <div class="ctl"><label for="mode">How the target is counted</label>
+          <select id="mode"><option value="cum" selected>Total of 2027 + 2028</option><option value="y2">2028 revenue alone</option></select></div>
+        <div class="ctl"><label for="b26">2026 revenue, best guess <output id="o-b26"></output></label>
+          <input type="range" id="b26" min="2" max="10" step="0.5" value="4">
+          <small>No 2026 figures are public yet. 2025 was NOK 3.19M. The model spreads this guess from −25% to +50%.</small></div>
+        <div class="ctl"><label for="g">Underlying growth per year <output id="o-g"></output></label>
+          <input type="range" id="g" min="0" max="150" step="5" value="45">
+          <small>The FIDO2 key market grows about 18–20% a year. Yubico grew 1.4% underlying in 2025. A partner network of 27 resellers adds room on top.</small></div>
+        <div class="ctl"><label for="lam">Large deals per year <output id="o-lam"></output></label>
+          <input type="range" id="lam" min="0" max="4" step="0.1" value="0.8">
+          <small>Deals of roughly 2,000 cards (median NOK 2M). No named enterprise or public-sector customer has been found so far.</small></div>
+        <div class="ctl"><label for="pFund">Chance of a funding squeeze <output id="o-pFund"></output></label>
+          <input type="range" id="pFund" min="0" max="80" step="5" value="30">
+          <small>Cash was NOK 132k at the end of 2025. If funding tightens, growth is cut by 60% and large deals by 40%.</small></div>
+        <div class="ctl"><label for="pPrice">Chance of price pressure <output id="o-pPrice"></output></label>
+          <input type="range" id="pPrice" min="0" max="100" step="5" value="50">
+          <small>Competing cards and keys cost €20–98. Under pressure, Pone's price drops 20%.</small></div>
+        <div class="ctl"><label for="pCert">Chance certifications block tenders <output id="o-pCert"></output></label>
+          <input type="range" id="pCert" min="0" max="100" step="5" value="40">
+          <small>Pone holds FIDO Level 1. IDEX and Yubico hold Level 2, and FIPS or Common Criteria is still only planned at Pone. If this blocks tenders, large deals are halved.</small></div>
+        <div class="ctl"><label for="pSupply">Chance of a sensor supply disruption <output id="o-pSupply"></output></label>
+          <input type="range" id="pSupply" min="0" max="50" step="1" value="12">
+          <small>IDEX is the only sensor supplier. It had negative solvency in 2025 and now sells a competing card. A disruption halves one year's revenue.</small></div>
+        <div class="ctl"><label for="pTail">Chance the 2027 deadlines lift demand <output id="o-pTail"></output></label>
+          <input type="range" id="pTail" min="0" max="100" step="5" value="50">
+          <small>Microsoft switches off SMS and voice MFA in Entra on 1 Feb 2027, and Norway is preparing its NIS2 law. If demand rises, growth in 2027 gets +25 points.</small></div>
+        <button class="btn" id="reset">Reset to research defaults</button>
+      </div>
+
+      <div style="display:grid;gap:18px;min-width:0">
+        <div class="card">
+          <h3 style="font-size:16px">Range of outcomes</h3>
+          <p class="muted" style="margin:4px 0 8px">How often each revenue level came up across the 20,000 simulated futures. The dashed line is the target.</p>
+          <svg id="hist" role="img" aria-label="Histogram of simulated revenue"></svg>
+        </div>
+        <div class="card">
+          <h3 style="font-size:16px">What has to be true</h3>
+          <div class="math" id="math"></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:16px;margin-bottom:8px">Risk register</h3>
+          <div style="overflow-x:auto"><table class="reg" id="reg"></table></div>
+        </div>
+      </div>
+    </div>
+    <p class="muted" style="font-size:12.5px">Model limits: annual steps, independent risks, and no cost side, so it says nothing about whether the revenue would be profitable. The 2026 base and the growth rate drive most of the result, so update them as soon as you have 2026 numbers.</p>
+  </div>
+</section>
+
+<!-- ============ ADVICE ============ -->
+<section class="view page" id="v-adv" role="tabpanel" hidden>
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Recommendations · ranked by impact on the next 24 months</div>
+      <h2 style="font-size:24px">What would move Pone forward</h2>
+      <p class="lede">These recommendations draw on everything in the other tabs: public perception, the competitor comparison, the reputation score and the revenue risk model. Each one says what it is based on.</p>
+    </div>
+    <div class="card" style="display:grid;gap:8px">
+      <h3 style="font-size:16px">The situation in four lines</h3>
+      <ul style="margin:0;padding-left:18px;display:grid;gap:4px">
+        <li>Pone has the only product among the four with a display, Bluetooth and a fingerprint sensor in a card. Reviewers like it.</li>
+        <li>It costs 1.6 to 6 times more than the competing products. It also has the weakest certifications, the lowest visibility and no customer that anyone outside Pone has confirmed.</li>
+        <li>Competition is closing in: IDEX, which supplies Pone's sensor, now sells its own FIDO2 card in Norway. Swissbit is previewing face biometrics, and CardLab and Token launched similar cards in 2026.</li>
+        <li>Two deadlines open a window: Microsoft switches off SMS and voice MFA in Entra on 1 February 2027, and Norway is preparing its NIS2 law.</li>
+      </ul>
+    </div>
+    <div class="advice" id="advice"></div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const css = getComputedStyle(document.documentElement);
+const col = c => css.getPropertyValue('--'+c).trim();
+
+/* ======================= TABS ======================= */
+const views = {tree:'v-tree',cmp:'v-cmp',rep:'v-rep',risk:'v-risk',adv:'v-adv'};
+function show(v){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.v===v));
+  Object.entries(views).forEach(([k,id])=>document.getElementById(id).hidden = k!==v);
+  try{localStorage.setItem('pone-tab',v)}catch(e){}
+  if(v==='tree') requestAnimationFrame(()=>fit(false));
+  if(v==='risk') requestAnimationFrame(simulate);
+  if(location.hash.slice(1)!==v) history.replaceState(null,'','#'+v);
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.v)));
+
+/* ======================= TREE ======================= */
+const S = {
+  hus:{n:"frodehus.dev",a:"Frode Hus",u:"https://www.frodehus.dev/offpad-a-review/",d:"Dec 2025",k:"Blog, hands-on review"},
+  azv:{n:"AzureViking",a:"H. Fridthjofsson",u:"https://azureviking.com/post/review-pone-biometrics-offpad-biometric-fido-2-authentication-device/",d:"Dec 2024",k:"Blog, review (device provided free)"},
+  sko:{n:"skotheimsvik.no",a:"Simon Skotheimsvik",u:"https://skotheimsvik.no/fido2-magic-using-the-offpad-with-microsoft-365",d:"Feb 2024",k:"Blog, hands-on review"},
+  zat:{n:"ZATAZ",a:"Damien Bancal",u:"https://www.zataz.com/offpad-ponebiometrics-zataz-passwordless-authentication/",d:"Sep 2025",k:"French media, unsponsored test"},
+  inf:{n:"Infinigate",a:"H. K. Holm",u:"https://www.infinigate.com/no/leverandorer/pone-biometrics/brukervurdering/",d:"~Sep 2025",k:"User review"},
+  hn:{n:"Hacker News",a:"T3OU-736",u:"https://news.ycombinator.com/item?id=47642166",d:"Apr 2026",k:"Forum"},
+  cor:{n:"Corbado",a:"Vincent Delitz",u:"https://www.corbado.com/blog/best-fido2-hardware-security-keys",d:"Aug 2026",k:"FIDO2 key comparison"},
+  mbc:{n:"MyBiometricCards",a:"",u:"https://mybiometriccards.com/guides/pone-biometrics-overview/",d:"Aug 2026",k:"Technical guide"},
+  tit:{n:"Titan.uio.no",a:"",u:"https://www.titan.uio.no/teknologi/2024/phishing-sikker-innlogging-norsk-utviklet-produkt-.html",d:"Nov 2024",k:"UiO science magazine"},
+  cha:{n:"ChannelPartner.de",a:"Peter Marwan",u:"https://www.channelpartner.de/article/3901165/authentifizierung-ohne-cloud-und-usb-port.html",d:"Mar 2024",k:"German trade press"},
+  yel:{n:"Yellon (customer)",a:"",u:"https://ponebiometrics.com/yellon-boosts-it-security-with-offpad-by-pone-biometrics/",d:"~2024",k:"Testimonial published by Pone"},
+  ms:{n:"Microsoft Learn",a:"",u:"https://learn.microsoft.com/en-us/entra/identity/authentication/concept-fido2-hardware-vendor",d:"Oct 2026",k:"Official Entra ID list"},
+  bu:{n:"Biometric Update",a:"",u:"https://www.biometricupdate.com/202408/pone-biometrics-enables-fingerprint-logical-access-control-with-a-wireless-peripheral",d:"Aug 2024",k:"Trade press"},
+  bu23:{n:"Biometric Update",a:"",u:"https://www.biometricupdate.com/202305/idex-gets-production-order-of-fingerprint-sensors-for-biometric-access-control-cards",d:"May 2023",k:"Trade press"},
+  idx:{n:"The Paypers (IDEX)",a:"",u:"https://thepaypers.com/fraud-and-fincrime/news/idex-biometrics-partners-with-pone-biometrics",d:"Apr 2023",k:"Press release coverage"},
+  cry:{n:"Cryptera",a:"",u:"https://www.atmia.com/news/pone-biometrics-enters-strategic-collaboration-with-cryptera-for-secure-provisioning-of-offpad/19702/",d:"May 2023",k:"Partner press release"},
+  pqs:{n:"PQShield",a:"",u:"https://www.prnewswire.com/news-releases/pone-biometrics-names-pqshield-as-partner-in-the-launch-of-its-next-generation-biometric-security-hardware-solution-301704540.html",d:"Dec 2022",k:"Press release"},
+  spi:{n:"Spirius AB",a:"",u:"https://spirius.com/en/news/a-new-dimension-of-cybersecurity",d:"Dec 2024",k:"Swedish reseller"},
+  fido:{n:"FIDO Alliance",a:"",u:"https://fidoalliance.org/company/pone-biometrics/",d:"—",k:"Member profile"},
+  swm:{n:"SecurityWorldMarket",a:"",u:"https://www.securityworldmarket.com/no/Nyheter/Bedriftsnyheter/pone-biometrics-lanserer-ny-biometrisk-autentiseringsenhet",d:"Nov 2021",k:"Company news"},
+  pb:{n:"PitchBook",a:"",u:"https://pitchbook.com/profiles/company/506750-23",d:"2024",k:"Database"},
+  brreg:{n:"Brønnøysund register",a:"",u:"https://data.brreg.no/regnskapsregisteret/regnskap/918881344",d:"2025 accounts",k:"Official filed accounts"},
+  fa25:{n:"Finansavisen",a:"",u:"https://www.finansavisen.no/teknologi/2025/12/22/8316666/",d:"Dec 2025",k:"Business press (paywalled)"},
+  ita:{n:"ITavisen.no",a:"",u:"https://itavisen.no/2024/04/21/biometriske-losninger-i-kampen-mot-nettfisking-og-cybertrusler/",d:"Apr 2024",k:"Advertorial (sponsored)"},
+  fno:{n:"forskning.no",a:"",u:"https://www.forskning.no/digital-teknologi-informasjonsteknologi-internett/phishing-sikker-innlogging-med-fingeren-skal-stoppe-svindlere/2429313",d:"Nov 2024",k:"UiO-funded content"},
+  fin:{n:"Finansavisen forum",a:"",u:"https://www.finansavisen.no/forum/thread/159468/view",d:"—",k:"Forum (login required)"}
+};
+const B = [
+ {c:"pos",t:"Praised",g:"When people test the OFFPAD, the verdict is almost always positive. The display and the form factor come up most often.",th:[
+  ["E-ink display showing the site","The most cited strength: you check which service you are approving before you confirm.",[["hus","The display shows the requesting domain, and the manager lists credentials per site."],["sko","Seeing each stored credential is a feature he misses on other FIDO2 keys."],["hn","Likes the OFFPAD+ design because the display shows where you are authenticating."],["azv","The confirmation display is one of the main strengths."],["inf","Names the design and e-ink display among the strong points."],["cor","Lists the E Ink display as an advantage over Yubico and Feitian."]]],
+  ["Card format, always with you","Fits in a badge holder or wallet. A small USB key is easier to lose.",[["hus","Fits in the work lanyard holder. A YubiKey is easier to lose or forget."],["sko","Wallet-friendly card format; calls it a Scandinavian gem."],["inf","The holder also takes an access card."],["yel","The customer's CEO finds it \"small and handy\"."],["zat","A light 17 g card."]]],
+  ["Fast and simple","Easy enrolment, login in seconds, no QR code to scan.",[["zat","Authenticates in under 3 seconds, simple fingerprint enrolment."],["hus","Much faster than cross-device QR-code MFA, easy onboarding."],["azv","Setup described as simple."],["inf","Fast logins on a laptop."],["yel","The customer's CIO says it was easy to deploy."]]],
+  ["On-device biometrics, no cloud","The fingerprint stays encrypted on the device.",[["azv","Fingerprint matching on the device, no USB port needed."],["zat","No cloud storage."],["cor","Fingerprint templates stored on the key, works without a phone."],["tit","Built for phishing-resistant login; holds up to 100 passkeys."]]],
+  ["Technical credibility","Microsoft, the FIDO Alliance and established suppliers lend credibility.",[["ms","Listed among the FIDO2 authenticators supported by Entra ID."],["bu","Microsoft-approved FIDO2 vendor, CE marked, took part in Hacking4Allies."],["idx","IDEX says OFFPAD meets demand for authentication that is secure and simple to deploy."],["cry","Cryptera's CEO speaks of a significant and immediate market need."]]],
+  ["Battery life","Claimed 2–3 weeks of battery, confirmed by one test.",[["zat","Measured 17 days of battery life, in line with the claim."]]]
+ ]},
+ {c:"neg",t:"Criticised",g:"Complaints focus on mobile use, Bluetooth, compatibility and price.",th:[
+  ["Mobile NFC: PIN instead of fingerprint","On a phone, the card must be switched off and used over NFC. The display and sensor are inactive and a PIN is required.",[["hus","On mobile, the device must be off and used over NFC with a PIN."],["mbc","Over NFC while off, the display and sensor are inactive and the PIN takes over."],["inf","NFC + PIN is awkward on mobile."],["sko","Microsoft 365 does not offer BLE for security keys, so he had to use NFC."]]],
+  ["Bluetooth: pairing and wake-up delay","Several testers report slow or failed Bluetooth connections.",[["azv","Bluetooth pairing is sometimes fussy when switching devices."],["hus","Slight Bluetooth delay at power-on."],["sko","Takes a while to connect to Windows after power-on."],["inf","Bluetooth did not work with his phone; the device powers off quickly."]]],
+  ["Compatibility and integration","Display features are not supported everywhere, macOS is limited and integration needs Entra ID expertise.",[["sko","macOS: no Mac login, no BLE in browsers, NFC only in Safari. The Device Manager needs admin rights."],["azv","Not every service supports every feature."],["cha","Integration requires Active Directory and Entra ID know-how."],["zat","Success depends on online services adopting FIDO2."]]],
+  ["Price","€155 excl. VAT, hard to justify for consumers.",[["hus","At €155 excl. VAT, hard to recommend to home users. He recommends it to admins and consultants."],["azv","More expensive than most FIDO2 keys."],["cor","Premium price, estimated at $80–100."]]],
+  ["Bulk","Heavier and thicker than a USB key, and it needs charging.",[["azv","Bulkier and heavier than a USB key."],["cor","17 g versus 5 g for the YubiKey C Bio."],["mbc","A powered device that needs charging, thicker than a passive card."]]],
+  ["Low brand awareness","A little-known brand next to Yubico, hard to find outside Europe.",[["cor","Lower brand awareness than Yubico or Feitian, limited availability outside Europe."]]],
+  ["Cash and delays","Business press picked up funding pressure and product delays.",[["fa25","Reports that money is running out and the product was delayed, but investors are staying."]]],
+  ["Cold fingers, backup","Limits acknowledged by the founders in an interview.",[["tit","Struggles with cold fingers, and a backup means buying extra cards."]]]
+ ]},
+ {c:"neu",t:"Press and partners",g:"Most articles are press releases, funding stories or sponsored content.",th:[
+  ["Partnerships and distribution","The largest share of public coverage. 27 resellers are listed on Pone's site.",[["pqs","MoU with PQShield for post-quantum cryptography (defence, government, banks)."],["bu23","Fingerprint sensor order placed with IDEX Biometrics."],["cry","Cryptera provides key injection and certificates."],["spi","Spirius becomes the reseller in Sweden."],["cha","Reseller recruitment in DACH and rent-to-own from 50 devices."]]],
+  ["Funding and financials","Still a small, loss-making company.",[["bu","About NOK 37M raised since 2022 plus NOK 17M in grants; 43 shareholders (source: Finansavisen)."],["swm","NOK 16M from the Research Council of Norway in 2021, when Offpad AS was renamed."],["pb","$3.4M round in August 2024; about 11 employees."],["brreg","2025: revenue NOK 3.19M (first real product sales), net result −NOK 16.0M, cash NOK 132k at year-end."]]],
+  ["Sponsored content","Part of the positive coverage is paid for or comes from the UiO ecosystem.",[["ita","Article marked \"Annonse\" that calls OFFPAD revolutionary."],["fno","Produced and funded by UiO, with no independent expert."],["fido","FIDO Alliance member profile, written by the company."]]]
+ ]},
+ {c:"gap",t:"Gaps",g:"What cannot be found online says as much as what can.",th:[
+  ["No major Norwegian press","Nothing found in DN, E24, Shifter, Digi.no, Tek.no, Kapital or ComputerWorld Norge, apart from Finansavisen's paywalled funding articles.",[]],
+  ["No consumer community","No Reddit threads, no discussion on X or YouTube, no Amazon, Trustpilot or Google reviews. Not sold at Komplett, Elkjøp or Dustin.",[]],
+  ["No employee reviews","No Glassdoor or Indeed profile, which is normal for a team of about 9–11.",[]],
+  ["Unverifiable customers","Hydro and Aker BP appear on your website, but no outside source confirms them. No public-sector or defence customer is named, and no independent audit was found.",[]],
+  ["No events or awards","No trade-show appearance (it-sa, RSA, Authenticate) and no award found for 2025–2026.",[]],
+  ["Closed investor forum","A thread called \"Idex/PONE Biometric\" exists on the Finansavisen forum, but reading it requires an account.",[["fin","Thread exists, content not read (login required)."]]]
+ ]}
+];
+const data = {name:"Pone Biometrics · OFFPAD",children:B.map(b=>({name:b.t,c:b.c,g:b.g,children:b.th.map(([t,g,items])=>({name:t,c:b.c,g,items,children:items.map(([k,txt])=>({name:S[k].n,c:b.c,s:S[k],txt}))}))}))};
+const svg = d3.select('#svg'), g = svg.append('g'), gl = g.append('g'), gn = g.append('g');
+const zoom = d3.zoom().scaleExtent([.25,2.5]).on('zoom',e=>g.attr('transform',e.transform));
+svg.call(zoom);
+const root = d3.hierarchy(data);
+root.descendants().forEach((d,i)=>{d._children=d.children; d.id='n'+i});
+const collapseToThemes = () => root.descendants().forEach(d=>{ d.children = d.depth>=2 ? null : d._children });
+collapseToThemes();
+const radius = d => d.depth===0?11 : d.depth===1?9 : d.depth===2? 4+Math.sqrt(d.data.items.length||0.5)*3 : 4;
+const colX = [0,250,470,800];
+const diag = d3.linkHorizontal().x(d=>d.y).y(d=>d.x);
+let sel = null;
+function update(src){
+  d3.tree().nodeSize([26,1]).separation((a,b)=>(a.parent===b.parent?1:1.4)*(a.depth===1||b.depth===1?1.8:1))(root);
+  root.each(d=>d.y=colX[d.depth]);
+  const nodes=root.descendants(), links=root.links(), t=svg.transition().duration(350);
+  gl.selectAll('path').data(links,d=>d.target.id).join(
+    en=>en.append('path').attr('class','link').attr('d',()=>{const o={x:src.x0??src.x,y:src.y0??src.y};return diag({source:o,target:o})})
+      .attr('stroke',d=>d.target.depth>1?col(d.target.data.c):null).attr('stroke-opacity',d=>d.target.depth>1?.45:1),
+    up=>up,
+    ex=>ex.transition(t).attr('d',()=>{const o={x:src.x,y:src.y};return diag({source:o,target:o})}).remove()
+  ).transition(t).attr('d',diag);
+  const node=gn.selectAll('g.node').data(nodes,d=>d.id);
+  const en=node.enter().append('g').attr('class',d=>'node d'+d.depth).attr('transform',`translate(${src.y0??src.y},${src.x0??src.x})`)
+    .on('click',(e,d)=>{ if(d._children&&d.depth<3&&d.depth>0) d.children=d.children?null:d._children; select(d); update(d); });
+  en.append('circle'); en.append('text').attr('class','lbl'); en.append('text').attr('class','badge');
+  const all=en.merge(node);
+  all.classed('sel',d=>d===sel);
+  all.select('circle').attr('r',radius).attr('fill',d=>d.depth===0?col('accent'):d.depth===3?col('surface'):col(d.data.c))
+    .attr('stroke',d=>d.depth===3?col(d.data.c):col('bg')).attr('fill-opacity',d=>d.depth===2&&!d.children&&d._children?.length?.55:1);
+  all.select('text.lbl').attr('dy','0.32em').attr('x',d=>d.depth===0?-18:radius(d)+8).attr('text-anchor',d=>d.depth===0?'end':'start').text(d=>d.data.name);
+  all.select('text.badge').attr('dy','0.32em').attr('x',function(d){const l=this.parentNode.querySelector('.lbl');return radius(d)+14+(l.getComputedTextLength?l.getComputedTextLength():0)})
+    .text(d=>d.depth===2&&d.data.items.length?`${d.data.items.length} src${d.children?'':' ▸'}`:'');
+  all.transition(t).attr('transform',d=>`translate(${d.y},${d.x})`);
+  node.exit().transition(t).attr('transform',`translate(${src.y},${src.x})`).remove();
+  nodes.forEach(d=>{d.x0=d.x;d.y0=d.y});
+}
+function fit(animate=true){
+  const b=g.node().getBBox(), w=svg.node().clientWidth, h=svg.node().clientHeight;
+  if(!w||!h||!b.width) return;
+  const k=Math.min(1.1,.9*Math.min(w/(b.width+40),(h-50)/(b.height+40)));
+  const tr=d3.zoomIdentity.translate(w/2-k*(b.x+b.width/2),(h+30)/2-k*(b.y+b.height/2)).scale(k);
+  animate?svg.transition().duration(400).call(zoom.transform,tr):svg.call(zoom.transform,tr);
+}
+const tone={pos:"Praised",neg:"Criticised",neu:"Press and partners",gap:"Gaps"};
+const card=(s,txt)=>`<li><a href="${s.u}" target="_blank" rel="noopener">${esc(s.n)}${s.a?' · '+esc(s.a):''}</a><span class="meta">${esc(s.k)} · ${s.d}</span><p>${esc(txt)}</p></li>`;
+function select(d){
+  sel=d; const p=document.getElementById('panel'), x=d.data;
+  if(d.depth===0){p.innerHTML=`<span class="tone muted">Summary</span><h2>${esc(x.name)}</h2>
+    <p>A very positive image, but a quiet one. About ten independent reviews exist, almost all favourable, written mostly by Microsoft / Entra ID specialists.</p>
+    <p><b>Top strength:</b> the e-ink display, cited by 6 sources. <b>Top criticism:</b> mobile NFC mode and Bluetooth, each cited by 4 sources, followed by price.</p>
+    <p class="muted">No coverage in the major Norwegian press. No consumer reviews. One business-press article (Finansavisen, Dec 2025) mentions funding pressure and delays.</p>
+    <p class="muted">Click a branch or a theme to see the comments.</p>`;return;}
+  const color=`style="color:${col(x.c)}"`;
+  if(d.depth===1){p.innerHTML=`<span class="tone" ${color}>${tone[x.c]}</span><h2>${esc(x.name)}</h2><p>${esc(x.g)}</p><ul class="cards">${d._children.map(t=>`<li><b>${esc(t.data.name)}</b><span class="meta">${t.data.items.length} source(s)</span><p class="muted">${esc(t.data.g)}</p></li>`).join('')}</ul>`;return;}
+  if(d.depth===2){p.innerHTML=`<span class="tone" ${color}>${tone[x.c]}</span><h2>${esc(x.name)}</h2><p>${esc(x.g)}</p>${x.items.length?`<ul class="cards">${x.items.map(([k,t])=>card(S[k],t)).join('')}</ul>`:'<p class="muted">No source found. That absence is the finding.</p>'}`;return;}
+  p.innerHTML=`<span class="tone" ${color}>${tone[x.c]} · ${esc(d.parent.data.name)}</span><h2>${esc(x.s.n)}</h2><ul class="cards">${card(x.s,x.txt)}</ul>`;
+}
+document.getElementById('expand').onclick=()=>{root.descendants().forEach(d=>d.children=d._children);update(root);setTimeout(fit,800)};
+document.getElementById('collapse').onclick=()=>{collapseToThemes();update(root);setTimeout(fit,800)};
+document.getElementById('fit').onclick=()=>fit();
+root.x0=0; root.y0=0;
+function settle(){update(root);gn.selectAll('g.node').interrupt().attr('transform',d=>`translate(${d.y},${d.x})`);gl.selectAll('path').interrupt().attr('d',diag);fit(false)}
+settle(); select(root);
+document.fonts?.ready.then(settle);
+addEventListener('resize',()=>{if(!document.getElementById('v-tree').hidden)fit(false)});
+
+/* ======================= COMPARISON ======================= */
+const CO=[
+ {k:"pone",n:"Pone Biometrics",p:"OFFPAD+",c:"c-pone"},
+ {k:"yub",n:"Yubico",p:"YubiKey 5 NFC / C Bio",c:"c-yub"},
+ {k:"idex",n:"IDEX Biometrics",p:"Total Access Card IDX5610",c:"c-idex"},
+ {k:"swiss",n:"Swissbit",p:"iShield Key 2",c:"c-swiss"}
+];
+// Each row: label, [pone, yub, idex, swiss], best index(es), worst index(es)
+const ROWS=[
+ ["Product"],
+ ["Form factor",["Credit-card size, 2.5 mm, with holder","USB key on a keyring","Standard ID-1 card","USB key on a keyring"],[],[]],
+ ["Weight",["17 g","3 g (5 NFC) · 5 g (C Bio)","Card weight, battery-free","~5 g"],[1],[0]],
+ ["Fingerprint",["Yes, on the device (up to 3 fingers)","Bio series only","Yes, on the card (up to 2 fingers)","No. Face verification shown as a preview only"],[0,2],[3]],
+ ["Display",["Yes, e-ink, shows the site being approved","No","No","No"],[0],[1,2,3]],
+ ["Connections",["Bluetooth LE, NFC, USB-C via holder","USB-A/C + NFC (Bio: USB only, no NFC)","NFC only","USB-A/C + NFC"],[0],[2]],
+ ["Fingerprint on a phone",["No: over NFC the card is off and asks for a PIN","No: the Bio has no NFC","Yes: NFC-powered fingerprint","No fingerprint"],[2],[]],
+ ["Power",["Battery, Qi charging, ~2 weeks","No battery","No battery","No battery"],[1,2,3],[0]],
+ ["Passkeys stored",["100","100","Not published","300"],[3],[]],
+ ["Other protocols",["FIDO2 only","PIV, OpenPGP, OATH, OTP","PIV, PKOC","PIV, HOTP, TOTP (Pro)"],[1],[0]],
+ ["Door / building access",["Under development","No","Yes: DESFire EV3, HID Seos, LEGIC","Yes: DESFire EV3, HID Seos"],[2,3],[1]],
+ ["Firmware updates",["Not stated","No: a new version means new hardware","Not stated","Yes, remote and secure"],[3],[1]],
+ ["Certifications"],
+ ["FIDO level",["Level 1","Level 2","Level 2 (2026)","Level 1 (first gen.); Key 2 unconfirmed"],[1,2],[0]],
+ ["FIPS / Common Criteria",["Planned","FIPS 140-3 (May 2026), Spanish ENS Alta, French CSPN","Chip at CC EAL6+","FIPS 140-3 L3 and CC EAL6+ (via the NXP chip)"],[1],[0]],
+ ["Listed in Microsoft Entra",["Yes","Yes","—","—"],[],[]],
+ ["Price"],
+ ["Price excl. VAT",["€155 (OFFPAD €110 at 2+ units)","€29 Security Key · €58 5 NFC · €98 C Bio","Not published (similar battery-free cards: ~$20–39)","€26–55"],[3],[0]],
+ ["Subscription",["Support plan €2 per unit per month","YubiKey as a Service: $15–55 per user per year, 500+ users","—","—"],[1],[]],
+ ["Company"],
+ ["Base",["Oslo, Norway","Stockholm, Sweden","Oslo, Norway (R&D in UK)","Bronschhofen, Switzerland · factory in Berlin"],[],[]],
+ ["Ownership",["Private, 43+ shareholders","Listed on Nasdaq Stockholm","Listed on Euronext Oslo","Ardian (private equity), possible sale"],[],[]],
+ ["Revenue (latest year)",["NOK 3.19M (2025)","SEK 2.22bn (2025)","USD 0.3M (2025); Q3 2026 ≈ NOK 6.6M","Not disclosed (~$250M earnings reported)"],[1,3],[0,2]],
+ ["Profitability",["Net loss NOK 16.0M (2025)","EBIT margin 14.4% (Q2 2026)","Net loss USD 10.0M (2025)","Profitable"],[1,3],[0,2]],
+ ["Cash position",["NOK 132k (end 2025)","~SEK 1.0bn","NOK 28.5M (Q2 2026), no debt","Backed by Ardian"],[1,3],[0]],
+ ["Employees",["~9–11","507","~19–39","~450–500"],[1],[0]],
+ ["Customers",["No named customer confirmed by outside sources (Yellon testimonial)","4,500+ businesses; 38% of the Fortune 500","23 pilots; a Norwegian public authority; record order of $450k+ (Oct 2026)","5,000+ (mostly memory); no named key customers"],[1],[0]],
+ ["Channels",["27 resellers (NO, SE, FR, DACH)","Direct, Amazon, Best Buy, OpenAI two-pack, partner programme","25 channel partners, Infinigate","Infinigate, ADN, Tx Systems, RSA co-brand"],[1],[]],
+ ["Reputation"],
+ ["Reputation index",["45 / 100","85 / 100","48 / 100","60 / 100"],[1],[0]],
+ ["Customer ratings",["No marketplace ratings","Amazon ~4.6 (18k ratings), TrustRadius 9.4","No product ratings","Thin: Newegg 3.2 (gen 1)"],[1],[]],
+ ["Most praised",["Display, card format, speed","Durability, protocol range, trust","Battery-free all-in-one card","Price, EU-made, certifications"],[],[]],
+ ["Most criticised",["NFC fallback to PIN, Bluetooth, price","No firmware updates (EUCLEAK), cost of buying two keys","Dilution, missed targets, 20 years without scale","Low visibility, thin reviews"],[],[]]
+];
+(function(){
+  const t=document.getElementById('cmp');
+  let h=`<thead><tr><th style="background:var(--surface)"></th>${CO.map(c=>`<th><span class="co"><i style="background:var(--${c.c})"></i>${c.n}</span><small>${c.p}</small></th>`).join('')}</tr></thead><tbody>`;
+  ROWS.forEach(r=>{
+    if(r.length===1){h+=`<tr class="grp"><th colspan="5">${r[0]}</th></tr>`;return;}
+    const [lab,vals,best,worst]=r;
+    h+=`<tr><th scope="row">${lab}</th>${vals.map((v,i)=>`<td class="${best.includes(i)?'best':''} ${worst.includes(i)?'worst':''} ${i===0?'pone':''}">${esc(v)}</td>`).join('')}</tr>`;
+  });
+  t.innerHTML=h+'</tbody>';
+  const SW=[
+   {n:"Only Pone has",c:"c-pone",items:["A display that shows which site you are approving. Yubico's 5.8 firmware pushes \"verified authorization\" for payments and AI agents with no screen at all.","Bluetooth, so it works with PCs and phones that have no NFC reader or free USB port.","A fingerprint in a card that fits a badge holder."]},
+   {n:"Yubico has, Pone does not",c:"c-yub",items:["FIDO Level 2, FIPS 140-3 and national ratings in Spain and France","A price 2.7 to 5 times lower on its main keys","A subscription model with SEK 412M of recurring revenue","Big Tech references, Best Buy, Amazon, OpenAI","No battery to charge or wear out"]},
+   {n:"IDEX has, Pone does not",c:"c-idex",items:["A fingerprint that works on phones over NFC, with no battery","Door access (DESFire, Seos, LEGIC) and PIV on the same card","FIDO Level 2","Owns the sensor IP, the same sensor Pone buys","Already pilots with a Norwegian public authority and Telenor Cyberdefence"]},
+   {n:"Swissbit has, Pone does not",c:"c-swiss",items:["Prices from €26","300 passkeys and remote firmware updates","FIPS 140-3 Level 3 and CC EAL6+ through its chip","Its own factory and a deep-pocketed owner","Face biometrics on the way, which would remove Pone's biometric edge over standard keys"]}
+  ];
+  document.getElementById('swot').innerHTML=SW.map(s=>`<div class="card swot" style="border-top:4px solid var(--${s.c})"><h3>${s.n}</h3><ul>${s.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`).join('');
+})();
+
+/* ======================= REPUTATION ======================= */
+const DIM=[
+ {k:"rev",n:"Independent reviews",w:25},
+ {k:"vis",n:"Visibility",w:20},
+ {k:"press",n:"Press tone",w:15},
+ {k:"trust",n:"Trust and certifications",w:20},
+ {k:"fin",n:"Financial stability",w:10},
+ {k:"emp",n:"Employer rating",w:10}
+];
+const REP={
+ pone:{rev:[18,"~10 independent reviews, almost all positive with reservations (AzureViking, Frode Hus, Skotheimsvik, ZATAZ, Infinigate, HN)."],
+       vis:[4,"No consumer reviews, no major Norwegian press, 1,171 LinkedIn followers, no events or awards found."],
+       press:[9,"Coverage is mostly partners and sponsored content. Finansavisen (Dec 2025) reported funding pressure and delays."],
+       trust:[7,"FIDO L1 and CE only; FIPS and Common Criteria planned. Listed in Microsoft Entra."],
+       fin:[2,"Cash NOK 132k at end 2025, net loss NOK 16M, inventory up 3x."],
+       emp:[5,"No data (team of ~9–11). Half marks by default.",true]},
+ yub:{rev:[22,"Amazon ~4.6 on ~18k ratings, TrustRadius 9.4, top pick at TechRadar. Trustpilot weak (~2.5 on 16 reviews)."],
+       vis:[19,"Default brand in hardware MFA: Best Buy, OpenAI, 4,500+ business customers."],
+       press:[10,"EUCLEAK (2024), a leaked Q1 2026 report, layoffs and a CEO change, then a strong Q2 rebound."],
+       trust:[19,"FIDO L2, FIPS 140-3, ENS Alta, CSPN. Firmware cannot be updated."],
+       fin:[8,"Profitable, ~SEK 1bn in cash, but sales fell 4.7% in 2025."],
+       emp:[7,"Glassdoor 3.7 on 40 reviews, 76% would recommend."]},
+ idex:{rev:[12,"No product reviews. Trade press praises the sensor technology and certifications."],
+       vis:[10,"Steady coverage in trade and financial press, mostly about finances."],
+       press:[5,"2025: CEO forced out, layoffs, debt converted at NOK 0.01, 100:1 reverse split. 2026: missed Q3 guidance."],
+       trust:[14,"FIDO L2, CC EAL6+ chip, Visa, Mastercard and RuPay approvals, long patent history."],
+       fin:[2,"Negative solvency at end 2025; NOK 100M raised in 2026; burns ~NOK 20M a quarter."],
+       emp:[5,"No reliable data. Half marks by default.",true]},
+ swiss:{rev:[13,"Very few reviews: reseller first impressions, Newegg 3.2 on the first generation."],
+       vis:[7,"Press-release coverage only, missing from \"YubiKey alternatives\" lists, almost no Reddit presence."],
+       press:[11,"Neutral to positive: product launches, new CEO from Bundesdruckerei, RSA co-brand."],
+       trust:[15,"FIPS 140-3 L3 and CC EAL6+ through the NXP chip, Made in Germany, FIDO board seat."],
+       fin:[9,"Large and profitable; owner exploring a sale."],
+       emp:[5,"Glassdoor 3.3 and Indeed 2.5 on a handful of very old reviews. Treated as no data.",true]}
+};
+(function(){
+  const tot=k=>DIM.reduce((s,d)=>s+REP[k][d.k][0],0);
+  const order=[...CO].sort((a,b)=>tot(b.k)-tot(a.k));
+  document.getElementById('scoreboard').innerHTML=order.map((c,i)=>{
+    const t=tot(c.k), lvl=t>=75?['Strong','p-good']:t>=55?['Moderate','p-mid']:['Weak','p-bad'];
+    return `<div class="card score" style="border-top:4px solid var(--${c.c})${c.k==='pone'?';box-shadow:0 0 0 2px var(--c-pone)':''}">
+      <div class="top"><div><div class="eyebrow">#${i+1}</div><h3 style="font-size:16px">${c.n}</h3></div><span class="pill ${lvl[1]}">${lvl[0]}</span></div>
+      <div class="big">${t}<small> / 100</small></div>
+      <div class="comp">${DIM.map(d=>{const v=REP[c.k][d.k];return `<span>${d.n}${v[2]?' <span class="pill p-na">no data</span>':''}</span><span class="v">${v[0]}/${d.w}</span><span class="bar"><i style="width:${v[0]/d.w*100}%;background:var(--${c.c})"></i></span>`}).join('')}</div></div>`;
+  }).join('');
+  document.getElementById('method').innerHTML=`<thead><tr><th>Signal (weight)</th>${CO.map(c=>`<th>${c.n}</th>`).join('')}</tr></thead><tbody>${DIM.map(d=>`<tr><th>${d.n}<br><span class="muted mono" style="font-weight:400">max ${d.w}</span></th>${CO.map(c=>{const v=REP[c.k][d.k];return `<td><span class="s">${v[0]}</span> <span class="muted">/ ${d.w}</span><br>${esc(v[1])}</td>`}).join('')}</tr>`).join('')}</tbody>`;
+})();
+
+/* ======================= RISK (Monte Carlo) ======================= */
+const DEF={b26:4,g:45,lam:0.8,pFund:30,pPrice:50,pCert:40,pSupply:12,pTail:50,target:20,cur:"NOK",mode:"cum"};
+const EURNOK=11.7; // approximate rate, used only to convert a EUR target
+const $=id=>document.getElementById(id);
+const fmt={b26:v=>`NOK ${(+v).toFixed(1)}M`,g:v=>`${v}%`,lam:v=>(+v).toFixed(1),pFund:v=>`${v}%`,pPrice:v=>`${v}%`,pCert:v=>`${v}%`,pSupply:v=>`${v}%`,pTail:v=>`${v}%`};
+let seed=1;
+function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+function normal(m,s){let u=0,v=0;while(!u)u=rand();while(!v)v=rand();return m+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function tri(a,c,b){const u=rand(),f=(c-a)/(b-a);return u<f?a+Math.sqrt(u*(b-a)*(c-a)):b-Math.sqrt((1-u)*(b-a)*(b-c))}
+function poisson(l){const L=Math.exp(-l);let k=0,p=1;do{k++;p*=rand()}while(p>L);return k-1}
+function read(){const P={};Object.keys(fmt).forEach(k=>P[k]=+$(k).value);P.target=+$('target').value||0;P.cur=$('cur').value;P.mode=$('mode').value;return P}
+function run(P,N=20000){
+  seed=12345;
+  const out=new Float64Array(N); let hits={fund:0,price:0,cert:0,supply:0,tail:0};
+  const failWith={fund:0,price:0,cert:0,supply:0}, cnt={fund:0,price:0,cert:0,supply:0};
+  const tgt=P.cur==='EUR'?P.target*EURNOK:P.target;
+  for(let i=0;i<N;i++){
+    const base=tri(P.b26*.75,P.b26,P.b26*1.5);
+    const ev={fund:rand()<P.pFund/100,price:rand()<P.pPrice/100,cert:rand()<P.pCert/100,supply:rand()<P.pSupply/100,tail:rand()<P.pTail/100};
+    const supplyYear=rand()<.5?0:1;
+    let rev=base,tot=0,last=0;
+    for(let y=0;y<2;y++){
+      let gr=normal(P.g/100,.3); if(ev.tail&&y===0)gr+=.25; if(ev.fund)gr*=.4;
+      rev=Math.max(.3,rev*(1+gr));
+      let r=rev*(ev.price?.8:1);
+      const lam=P.lam*(ev.cert?.5:1)*(ev.fund?.6:1), n=poisson(lam);
+      for(let d=0;d<n;d++) r+=2*Math.exp(normal(0,.6))*(ev.price?.8:1);
+      if(ev.supply&&y===supplyYear) r*=.5;
+      tot+=r; last=r;
+    }
+    const v=P.mode==='cum'?tot:last; out[i]=v;
+    for(const k in cnt){ if(ev[k]){cnt[k]++; if(v<tgt) failWith[k]++;} }
+  }
+  return {out,tgt,failWith,cnt,N};
+}
+function quant(a,q){const s=Array.from(a).sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.floor(q*s.length))]}
+function simulate(){
+  const P=read(); Object.keys(fmt).forEach(k=>$('o-'+k).textContent=fmt[k]($(k).value));
+  const {out,tgt,failWith,cnt,N}=run(P);
+  const p=Array.from(out).filter(v=>v>=tgt).length/N;
+  const med=quant(out,.5), lo=quant(out,.1), hi=quant(out,.9);
+  // Gauge
+  const pct=Math.round(p*100), color=p>=.6?col('pos'):p>=.3?col('gap'):col('neg');
+  const a=Math.PI*2*p, x=70+56*Math.sin(a), y=70-56*Math.cos(a);
+  $('gauge').innerHTML=`<circle cx="70" cy="70" r="56" fill="none" stroke="${col('sunk')}" stroke-width="14"/>`+
+    (p>=.999?`<circle cx="70" cy="70" r="56" fill="none" stroke="${color}" stroke-width="14"/>`:p>0?`<path d="M70 14 A56 56 0 ${a>Math.PI?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}" fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round"/>`:'')+
+    `<text x="70" y="72" text-anchor="middle" font-family="Sora,sans-serif" font-size="30" font-weight="650" fill="${col('fg')}">${pct}%</text><text x="70" y="94" text-anchor="middle" font-size="11" fill="${col('muted')}">chance</text>`;
+  const label=P.mode==='cum'?'over 2027 and 2028 combined':'in 2028 alone';
+  const tgtTxt=P.cur==='EUR'?`EUR ${P.target}M (≈ NOK ${Math.round(tgt)}M)`:`NOK ${P.target}M`;
+  $('verdict').textContent = p>=.6?`Likely: ${pct}% chance of reaching ${tgtTxt} ${label}`: p>=.3?`Possible but not the base case: ${pct}% chance of ${tgtTxt} ${label}`: p>=.05?`Unlikely without a step change: ${pct}% chance of ${tgtTxt} ${label}`:`Out of reach on current trajectory: ${pct<1?'<1':pct}% chance of ${tgtTxt} ${label}`;
+  $('verdict-sub').textContent=`The middle outcome is NOK ${med.toFixed(1)}M. In 8 scenarios out of 10, revenue lands between NOK ${lo.toFixed(1)}M and NOK ${hi.toFixed(1)}M.`;
+  const need=P.mode==='cum'?(-1+Math.sqrt(1+4*tgt/P.b26))/2-1:Math.sqrt(tgt/P.b26)-1;
+  $('kpis').innerHTML=[
+    [`NOK ${med.toFixed(1)}M`,'median outcome'],
+    [`NOK ${lo.toFixed(1)}–${hi.toFixed(1)}M`,'80% range'],
+    [`${Math.round(need*100)}% / yr`,'growth needed with no large deals'],
+    [`${(tgt/(P.mode==='cum'?2:1)/1.15*1000).toFixed(0)}`,'cards a year at ~NOK 1,150 net each']
+  ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
+  // Histogram
+  const el=$('hist'), W=el.clientWidth||600, H=240, m={l:44,r:12,t:10,b:30};
+  const xmax=Math.max(quant(out,.99),tgt*1.15);
+  const xs=d3.scaleLinear().domain([0,xmax]).range([m.l,W-m.r]);
+  const bins=d3.bin().domain([0,xmax]).thresholds(40)(Array.from(out).filter(v=>v<=xmax));
+  const ys=d3.scaleLinear().domain([0,d3.max(bins,b=>b.length)]).nice().range([H-m.b,m.t]);
+  const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
+  s.append('g').selectAll('line').data(ys.ticks(4)).join('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',d=>ys(d)).attr('y2',d=>ys(d)).attr('stroke',col('line')).attr('stroke-dasharray','2 3');
+  s.append('g').selectAll('rect').data(bins).join('rect').attr('x',b=>xs(b.x0)+1).attr('width',b=>Math.max(0,xs(b.x1)-xs(b.x0)-1)).attr('y',b=>ys(b.length)).attr('height',b=>ys(0)-ys(b.length)).attr('rx',2)
+    .attr('fill',b=>b.x0>=tgt?col('pos'):col('accent')).attr('fill-opacity',b=>b.x0>=tgt?.9:.55);
+  s.append('line').attr('x1',xs(tgt)).attr('x2',xs(tgt)).attr('y1',m.t).attr('y2',H-m.b).attr('stroke',col('fg')).attr('stroke-width',1.5).attr('stroke-dasharray','5 4');
+  s.append('text').attr('x',Math.min(xs(tgt)+6,W-110)).attr('y',m.t+12).style('fill',col('fg')).style('font-weight',600).text(`Target NOK ${Math.round(tgt)}M`);
+  s.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(xs).ticks(6).tickFormat(d=>`${d}M`)).call(a=>a.select('.domain').attr('stroke',col('line'))).call(a=>a.selectAll('line').attr('stroke',col('line')));
+  s.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(ys).ticks(4).tickFormat(d=>(d/N*100).toFixed(0)+'%')).call(a=>a.select('.domain').remove()).call(a=>a.selectAll('line').remove());
+  // What has to be true
+  const y1=P.mode==='cum'?tgt/(1+(1+need)):0;
+  $('math').innerHTML=P.mode==='cum'
+    ?`2026 base (your guess) ......... NOK ${P.b26.toFixed(1)}M<br>Target, 2027 + 2028 ............ NOK ${tgt.toFixed(0)}M<br>Growth needed every year ....... ${Math.round(need*100)}%  →  2027 ≈ NOK ${(P.b26*(1+need)).toFixed(1)}M, 2028 ≈ NOK ${(P.b26*(1+need)**2).toFixed(1)}M<br>Cards to sell over two years ... ≈ ${Math.round(tgt/1.15*1000).toLocaleString('en')} at ~NOK 1,150 net per card<br>2025 for comparison ............ NOK 3.19M ≈ ${Math.round(3.19/1.15*1000).toLocaleString('en')} cards`
+    :`2026 base (your guess) ......... NOK ${P.b26.toFixed(1)}M<br>Target, 2028 alone ............. NOK ${tgt.toFixed(0)}M<br>Growth needed every year ....... ${Math.round(need*100)}%<br>Cards to sell in 2028 .......... ≈ ${Math.round(tgt/1.15*1000).toLocaleString('en')} at ~NOK 1,150 net per card`;
+  // Risk register
+  const R=[
+   ["fund","Funding squeeze","Cash NOK 132k at end 2025; Finansavisen reported money running short (Dec 2025).","Raise 18–24 months of runway before pushing sales; use partner rent-to-own to bring cash forward."],
+   ["price","Price pressure","OFFPAD+ €155 vs YubiKey C Bio €98, Swissbit €26–55, battery-free biometric cards ~$20–39.","Sell on the display and approval use case, bundle hardware into a subscription."],
+   ["cert","Certification gap","FIDO L1 only; IDEX and Yubico are L2, FIPS / CC still planned.","Start FIDO L2 now; pick CC or FIPS based on the first big tender."],
+   ["supply","Sensor supply","IDEX is the sole sensor supplier, had negative solvency in 2025 and competes with its own card.","Secure a last-time-buy clause and buffer stock; qualify a second sensor source."],
+   ["tail","Upside: 2027 deadlines","Entra drops SMS / voice MFA on 1 Feb 2027; Norway preparing NIS2 law.","Run an Entra-admin campaign through partners in Q4 2026 – Q1 2027."]
+  ];
+  $('reg').innerHTML=`<thead><tr><th>Risk</th><th>Chance used</th><th>When it happens, target missed in</th><th>Evidence</th><th>Mitigation</th></tr></thead><tbody>${R.map(([k,n,ev,mit])=>{
+    const prob=P[{fund:'pFund',price:'pPrice',cert:'pCert',supply:'pSupply',tail:'pTail'}[k]];
+    const miss=k==='tail'?null:cnt[k]?failWith[k]/cnt[k]:null;
+    const sev=k==='tail'?'<span class="pill p-good">upside</span>':miss==null?'—':`<span class="pill ${miss>.85?'p-bad':miss>.6?'p-mid':'p-good'}">${Math.round(miss*100)}% of cases</span>`;
+    return `<tr><td><b>${n}</b></td><td class="mono">${prob}%</td><td>${sev}</td><td>${esc(ev)}</td><td>${esc(mit)}</td></tr>`}).join('')}</tbody>`;
+}
+let tm; function schedule(){clearTimeout(tm);tm=setTimeout(simulate,60)}
+document.querySelectorAll('#controls input,#controls select').forEach(e=>e.addEventListener('input',schedule));
+$('reset').onclick=()=>{Object.entries(DEF).forEach(([k,v])=>{if($(k))$(k).value=v});simulate()};
+addEventListener('resize',()=>{if(!$('v-risk').hidden)schedule()});
+
+/* ======================= ADVICE ======================= */
+const ADV=[
+ {ph:"Next 90 days",t:"Secure 18–24 months of runway before anything else",tags:[["Finance","p-bad"],["Critical","p-bad"]],
+  d:"Close a round sized for two years of sales effort, not the next quarter. Use partner rent-to-own deals and the €2 per unit per month support plan to bring cash forward. Turn the NOK 5.2M of inventory into sales with a partner promotion.",
+  e:"Cash NOK 132k against NOK 13.9M short-term debt at end 2025 (Brønnøysund). Finansavisen reported money running short in Dec 2025. In the risk model, a funding squeeze is the single biggest reason the NOK 20M target is missed."},
+ {ph:"Next 90 days",t:"Protect the sensor supply from IDEX",tags:[["Supply chain","p-bad"],["Critical","p-bad"]],
+  d:"Negotiate a supply agreement with a last-time-buy right, minimum allocation and source-code or design escrow. Build a 6–9 month buffer of sensors. Start qualifying a second sensor supplier.",
+  e:"IDEX is Pone's only sensor supplier. It had negative solvency at end 2025 and burns ~NOK 20M a quarter. Since 2026 it sells its own FIDO2 card into the same Norwegian public-sector tenders."},
+ {ph:"Next 90 days",t:"Launch an \"SMS is ending\" campaign for Microsoft Entra admins",tags:[["Sales","p-good"],["High impact","p-good"]],
+  d:"Give the 27 partners a ready-made offer for privileged accounts: admins, finance and executives. Include a pilot pack, an Entra setup guide and a 30-day trial. Target organisations that have to replace SMS and voice MFA before 1 February 2027.",
+  e:"Microsoft makes passkeys the default and switches off SMS and voice MFA in Entra on 1 Feb 2027. Your best reviews come from Entra specialists, and Frode Hus recommends OFFPAD for admins and consultants."},
+ {ph:"3–9 months",t:"Fix the mobile fingerprint gap and Bluetooth reliability",tags:[["Product","p-mid"],["Top complaint","p-mid"]],
+  d:"Make fingerprint work over NFC on phones, or make Bluetooth the reliable default on phones. Shorten the wake-up delay. Publish release notes so reviewers can see the fix.",
+  e:"Cited by 4 independent sources each (Frode Hus, MyBiometricCards, Infinigate, Skotheimsvik, AzureViking). IDEX's battery-free card already does fingerprint over NFC."},
+ {ph:"3–9 months",t:"Get FIDO Level 2, then one high-assurance certification",tags:[["Trust","p-mid"],["Unblocks tenders","p-good"]],
+  d:"FIDO L2 first: it is the quickest and both IDEX and Yubico have it. Then choose Common Criteria or FIPS 140-3 according to the first large tender you target. Norwegian public buyers will ask for both.",
+  e:"Pone is the only one of the four at FIDO L1. Trust and certifications cost Pone 13 of 20 points in the reputation index. In the risk model, a certification gap halves the chance of large deals."},
+ {ph:"3–9 months",t:"Move from selling cards to selling a service",tags:[["Pricing","p-mid"],["Recurring revenue","p-good"]],
+  d:"Offer OFFPAD as a service: hardware, replacements, support and the device manager for a fixed price per user per month. This takes the €155 sticker price out of the discussion and builds recurring revenue.",
+  e:"OFFPAD+ costs €155 against €26–98 for the competitors. Yubico's subscriptions grew 23% to SEK 412M ARR while its hardware sales flattened. Pone already has a €2 per unit per month support plan to build on."},
+ {ph:"3–9 months",t:"Own the \"see what you approve\" category",tags:[["Positioning","p-good"],["Unique","p-good"]],
+  d:"Make the display the headline. Position OFFPAD for approving high-risk actions: admin changes, payments and AI-agent actions. Yubico is now pushing exactly this use case on devices without a screen.",
+  e:"The display is the most praised feature (6 sources) and none of the three competitors has one. Yubico 5.8 (July 2026) and Token's new card (Oct 2026) both target AI-agent approvals."},
+ {ph:"3–9 months",t:"Publish three named customer case studies",tags:[["Proof","p-mid"]],
+  d:"Get written permission from three customers, one of them public sector, to publish a short case study with figures: users, deployment time, number of support tickets. Remove logos you cannot back up.",
+  e:"No outside source confirms a single enterprise or public-sector customer. Hydro and Aker BP on your website cannot be verified, which buyers and journalists will notice."},
+ {ph:"9–24 months",t:"Add building access to the card",tags:[["Product","p-mid"]],
+  d:"Ship the physical access function (DESFire, Seos) that is listed as under development. One card for the door and for login is what IDEX, Swissbit and CardLab now sell.",
+  e:"IDEX's Total Access Card, Swissbit's iShield Key 2 and CardLab's Access FIDO all combine door and IT access. Pone lists it as under development."},
+ {ph:"9–24 months",t:"Build visibility on purpose",tags:[["Reputation","p-mid"]],
+  d:"Seed devices to 20 Microsoft MVPs and security bloggers: that channel already produced every good review you have. Exhibit at it-sa and Authenticate. Commission one independent security audit and publish it. Pitch the story to DN, E24 and Shifter.",
+  e:"Visibility scores 4 out of 20, the weakest signal in Pone's reputation index. Nothing in the major Norwegian press, no consumer reviews and no events were found for 2025–2026."},
+ {ph:"9–24 months",t:"Lead with European sovereignty",tags:[["Positioning","p-good"]],
+  d:"Use the Tech Sovereignty Catalogue listing and Norwegian design in public-sector bids across the Nordics, France and DACH, where NIS2 is driving buying.",
+  e:"About 65% of Yubico's sales are in the Americas. Pone is listed in the European Tech Sovereignty Catalogue. About 20 of 27 EU states had transposed NIS2 by January 2026."}
+];
+(function(){
+  let h='',last='';
+  ADV.forEach((a,i)=>{ if(a.ph!==last){h+=`<div class="phase">${a.ph}</div>`;last=a.ph;}
+    h+=`<div class="adv"><div class="n">${String(i+1).padStart(2,'0')}</div><div><h3>${esc(a.t)}</h3><div class="tags">${a.tags.map(([t,c])=>`<span class="pill ${c}">${t}</span>`).join('')}</div><p>${esc(a.d)}</p><p class="ev"><b>Why:</b> ${esc(a.e)}</p></div></div>`;});
+  $('advice').innerHTML=h;
+})();
+
+/* ======================= START ======================= */
+let start='tree';
+const hv=location.hash.slice(1); if(views[hv]) start=hv; else { try{const s=localStorage.getItem('pone-tab'); if(views[s]) start=s;}catch(e){} }
+show(start);
+</script>
+</body>
+</html>
