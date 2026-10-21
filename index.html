@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
 <title>Pone Market Intelligence</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;650&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -140,6 +141,28 @@ table.reg{border-collapse:collapse;width:100%;min-width:760px}
 
 
 
+/* LinkedIn A–Z */
+.li-progress{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;position:sticky;top:0;z-index:2;background:var(--bg);padding-block:10px}
+.li-progress .track{height:10px;background:var(--sunk);border-radius:5px;overflow:hidden}
+.li-progress .track i{display:block;height:100%;background:var(--pos);transition:width .25s}
+.li-progress b{font:650 15px var(--f-display);font-variant-numeric:tabular-nums}
+.li-phase{display:grid;gap:10px}
+.li-phase>header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;padding:0;background:none}
+.li-phase>header h3{font-size:18px}
+.step{display:grid;grid-template-columns:auto 34px 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.step.done{opacity:.6}
+.step.done h4{text-decoration:line-through}
+.step input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--pos);cursor:pointer}
+.step .letter{font:650 20px var(--f-display);color:var(--accent);line-height:1.2}
+.step h4{margin:0;font:650 15px var(--f-display)}
+.step p{margin:4px 0 0;font-size:13.5px}
+.step .how{color:var(--muted);font-size:12.5px;margin-top:6px}
+.step .why{font-size:12.5px;color:var(--muted);border-left:2px solid var(--line);padding-left:10px;margin-top:8px}
+.draft{position:relative;background:var(--sunk);border-radius:6px;padding:12px 14px;margin-top:8px;font-size:13px;white-space:pre-wrap;line-height:1.55}
+.draft button{position:absolute;top:8px;right:8px;font:500 12px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:3px 10px;border-radius:999px;cursor:pointer}
+.draft .ph{background:var(--gap-bg);color:var(--gap);border-radius:3px;padding:0 3px}
+.draft-body{padding-right:70px}
+
 @media (max-width:900px){#v-tree{grid-template-columns:1fr;grid-template-rows:1fr 40%}#panel{border-left:0;border-top:1px solid var(--line)}.risk-grid{grid-template-columns:1fr}.verdict-box{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -157,6 +180,7 @@ table.reg{border-collapse:collapse;width:100%;min-width:760px}
   <button role="tab" id="t-rep" aria-selected="false" data-v="rep">Reputation score</button>
   <button role="tab" id="t-risk" aria-selected="false" data-v="risk">Revenue target risk</button>
   <button role="tab" id="t-adv" aria-selected="false" data-v="adv">Advice</button>
+  <button role="tab" id="t-li" aria-selected="false" data-v="li">LinkedIn A–Z</button>
 </nav>
 
 <!-- ============ TREE ============ -->
@@ -309,6 +333,27 @@ table.reg{border-collapse:collapse;width:100%;min-width:760px}
   </div>
 </section>
 
+<!-- ============ LINKEDIN A–Z ============ -->
+<section class="view page" id="v-li" role="tabpanel" hidden>
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Personal action plan · 26 steps</div>
+      <h2 style="font-size:24px">Your LinkedIn, from A to Z</h2>
+      <p class="lede">Do the steps in order: each group builds on the one before. Tick each step when it is done; the ticks are saved in this browser only. Text in yellow brackets is a placeholder for a number or fact only you know. Never publish a figure you cannot back up.</p>
+    </div>
+    <div class="li-progress"><div class="track"><i id="li-bar" style="width:0%"></i></div><b id="li-count">0 / 26</b></div>
+    <div id="li-steps" style="display:grid;gap:28px"></div>
+    <div class="card">
+      <h3 style="font-size:16px">How to know it is working</h3>
+      <ul style="margin:8px 0 0;padding-left:18px;display:grid;gap:4px;font-size:13.5px">
+        <li>In a private browser window, search Google for "Jean-Noël Georges" and "Jean Noel Georges" once a month. Note the position of your LinkedIn.</li>
+        <li>On LinkedIn, check "Search appearances" and "Profile views" in your analytics every Monday.</li>
+        <li>Target within 8 weeks: LinkedIn first on Google for your name, profile views doubled, one inbound request a week from a buyer, journalist, recruiter or event organiser.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script>
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -316,7 +361,7 @@ const css = getComputedStyle(document.documentElement);
 const col = c => css.getPropertyValue('--'+c).trim();
 
 /* ======================= TABS ======================= */
-const views = {tree:'v-tree',cmp:'v-cmp',rep:'v-rep',risk:'v-risk',adv:'v-adv'};
+const views = {tree:'v-tree',cmp:'v-cmp',rep:'v-rep',risk:'v-risk',adv:'v-adv',li:'v-li'};
 function show(v){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.v===v));
   Object.entries(views).forEach(([k,id])=>document.getElementById(id).hidden = k!==v);
@@ -702,6 +747,70 @@ const ADV=[
   ADV.forEach((a,i)=>{ if(a.ph!==last){h+=`<div class="phase">${a.ph}</div>`;last=a.ph;}
     h+=`<div class="adv"><div class="n">${String(i+1).padStart(2,'0')}</div><div><h3>${esc(a.t)}</h3><div class="tags">${a.tags.map(([t,c])=>`<span class="pill ${c}">${t}</span>`).join('')}</div><p>${esc(a.d)}</p><p class="ev"><b>Why:</b> ${esc(a.e)}</p></div></div>`;});
   $('advice').innerHTML=h;
+})();
+
+/* ======================= LINKEDIN A–Z ======================= */
+const LI=[
+ {ph:"Day 1 · Foundations",time:"about 2 hours",steps:[
+  ["Fix your name","Settings › Account preferences › Name. First name \"Jean-Noël\", last name \"Georges\". Keep the hyphen and the accent everywhere you appear.","Four spellings of your name split your Google results today. Google matches the exact name people type."],
+  ["Claim a clean profile address","Me › View profile › Edit public profile & URL › Edit your custom URL. Pick linkedin.com/in/jean-noel-georges (or /jeannoelgeorges if taken).","Your address today ends in -9692112, which Google weighs less. The name in the URL helps you rank for your name."],
+  ["Make the profile fully public","Same page, \"Public profile visibility\": turn on every section, including photo, headline, About, experience and articles.","Google can only show what LinkedIn makes public. Hidden sections are invisible in search."],
+  ["Set the location to Oslo","Edit intro › Location: Oslo, Norway. If you split your time, mention Sophia Antipolis in the About section rather than the location field.","A France location for the CEO of a Norwegian company confuses Norwegian buyers, investors and journalists."],
+  ["Upload a professional photo","Head and shoulders, plain background, face filling about 60% of the frame, looking at the camera, 400×400 px minimum. Set it visible to \"All LinkedIn members\" and public.","Profiles with a photo get many times more views and messages, and the photo appears next to your name on Google."],
+  ["Add a cover banner","1584×396 px. A clean image of the OFFPAD+ card with one line: \"Phishing-resistant login, verified on the card.\" Ask Pone's designer for it, or use Canva.","The banner is the largest space on the profile. Today it says nothing about what you do."],
+  ["Write a headline that says who you are","Edit intro › Headline. Use one of the three options below. Keep it under 220 characters.","The headline is what Google shows under your name. Today it only repeats your name.",
+   "Option A — CEO, Pone Biometrics · Phishing-resistant, passwordless authentication (FIDO2 / passkeys) · Former Frost & Sullivan Global Program Director, Digital Identity\n\nOption B — CEO @ Pone Biometrics | Biometric FIDO2 authenticators for Microsoft Entra | 25 years in smart cards & digital identity\n\nOption C — Helping IT teams replace passwords and SMS codes with biometric passkeys | CEO, Pone Biometrics | ex-Gemalto, ex-Frost & Sullivan"],
+  ["Add your contact info and website","Edit intro › Contact info. Add ponebiometrics.com with the label \"Company\", your work email, and the GitHub site if you want it public.","Gives visitors a next step, and every link between your sites helps Google connect them to you."]
+ ]},
+ {ph:"Week 1 · Content of the profile",time:"about 3 hours",steps:[
+  ["Rewrite the About section","Use the draft below. Short paragraphs, first person, no buzzwords. Fill in the yellow placeholders with real figures.","The first three lines show without a click. They must say who you help and how.",
+   "I help organisations stop phishing at the login screen.\n\nAt Pone Biometrics we build OFFPAD, a card-sized FIDO2 authenticator with a fingerprint sensor and a small screen that shows which site you are approving. It works with Microsoft Entra, Windows, macOS and Linux, over Bluetooth, NFC or USB-C.\n\nBefore Pone, I spent about ten years at Frost & Sullivan as Global Program Director for Digital Identification, advising card makers, banks and identity vendors across Europe. I started my career at Gemplus (now Thales) in smart card personalisation and business development.\n\nWhat I work on now:\n• Replacing passwords and SMS codes with passkeys before Microsoft switches off SMS MFA in Entra (1 February 2027)\n• NIS2 and phishing-resistant authentication for European organisations\n• Building a partner network across [number] countries\n\nBased in Oslo and Sophia Antipolis. I speak French and English [add Norwegian if relevant].\n\nGet in touch if you are moving to passwordless, or if you run an event on digital identity."],
+  ["Rewrite your Pone experience","Split it into two entries under Pone Biometrics: \"Chief Strategy Officer, Feb 2019 – [year]\" and \"Chief Executive Officer, [year] – present\". Add 3–5 bullet points with results for each.","Six different titles circulate online. Two clear entries settle the question and show your progression.",
+   "Chief Executive Officer · Pone Biometrics · Oslo · [year] – present\n• Lead a team of [number] building OFFPAD and OFFPAD+, card-sized biometric FIDO2 authenticators\n• Launched OFFPAD+ (USB-C, macOS support) in [year]\n• Built a partner network of 27 resellers across Norway, Sweden, France, Germany, Austria, Switzerland and Estonia\n• Listed as a supported FIDO2 authenticator in Microsoft Entra ID\n• Raised [amount] from [type of investors] [only if public]\n\nChief Strategy Officer · Pone Biometrics · Feb 2019 – [year]\n• Defined product strategy for OFFPAD and the move to FIDO2\n• Signed technology partnerships with IDEX Biometrics, Cryptera, PQShield and Utimaco\n• Spoke at Authenticate 2021 (FIDO Alliance) on biometric authentication"],
+  ["Complete Frost & Sullivan and Gemalto","Frost & Sullivan: \"Global Program Director, Digital Identification\", with exact years, plus 2–3 bullets (e.g. smart card market forecasts, industry awards to Infineon and IDEMIA). Gemplus/Gemalto: title, years, one line on smart card personalisation.","These roles prove the expertise behind your current job. Without dates they look vague."],
+  ["Add education and languages","Add your degrees with years, and a Languages section (French, English, others with level).","Recruiters and boards filter on these. They are missing from every public page about you."],
+  ["Choose 5 top skills","Skills › keep the 5 that matter: Digital Identity, Authentication, FIDO2 / Passkeys, Biometrics, Go-to-Market Strategy. Remove generic ones. Pin them to the top.","Skills feed LinkedIn search. Recruiters search by skill, not by job title."],
+  ["Fill the Featured section","Add 3–4 items: the ZATAZ OFFPAD review, the Authenticate 2021 talk, the OFFPAD+ product page, and your best post once you have written it.","Featured is the only visual showcase on the profile. It proves what the headline claims."],
+  ["Ask for 3 recommendations","Message three people: one partner (a reseller), one customer, one former Frost & Sullivan colleague. Suggest what they could mention.","Recommendations are third-party proof. You have none visible today."],
+  ["Turn on \"Open to\" correctly","Open to › Providing services (speaking, advisory). If you look for a role: Finding a new job › visible to \"Recruiters only\", never the public #OpenToWork frame.","Signals availability for talks and advisory work without alarming Pone's investors or partners."]
+ ]},
+ {ph:"Weeks 2–8 · Visibility",time:"about 2 hours a week",steps:[
+  ["Post twice a week, on a fixed schedule","Tuesday and Thursday mornings, 8–9am Oslo time. Rotate three formats: one insight from your analyst years, one field story from Pone, one comment on news (passkeys, NIS2, the Entra SMS deadline).","Your current activity is mostly resharing. Original posts are what LinkedIn and Google index under your name."],
+  ["Write your first three posts now","Use the starters below. Each post: a strong first line, 5–8 short lines, one question at the end. No links in the post itself; put the link in the first comment.","Ready posts remove the blank-page problem. A link in the body reduces reach.",
+   "1 — \"On 1 February 2027, Microsoft switches off SMS and voice codes in Entra. Here is what IT teams have left to do in the next [number] weeks…\"\n\n2 — \"In 2013, as an analyst, I predicted fingerprint sensors would arrive on phones. What I got wrong was… and what it means for passkeys today.\"\n\n3 — \"Synced passkeys or device-bound passkeys? After [number] deployments, here is when each one makes sense.\""],
+  ["Comment before you post","Each day, leave 3 thoughtful comments (3+ lines) on posts by people in identity and security: FIDO Alliance members, Microsoft MVPs, CISOs in Norway and France.","Comments put your name in front of their audience and often bring more profile views than your own posts."],
+  ["Grow your network with intent","Send 10 personalised invitations a week: CISOs and IT heads in Norway, France and DACH, Microsoft MVPs, identity journalists, event organisers, reseller partners.","Your reach is limited by your network. Targeted invites build the audience that buys, invites you to speak or hires."],
+  ["Publish one LinkedIn article a month","Longer piece (800–1,200 words) on a topic you own: device-bound vs synced passkeys, biometrics in the EU identity wallet, lessons from building hardware in Norway. Turn it into a newsletter if it works.","Articles are indexed by Google under your name and outlast posts."],
+  ["Use the Pone page to amplify you","Ask the team to share your posts from the Pone company page and to tag you in every Pone announcement. Make sure Pone press releases quote you.","In most Pone coverage someone else is quoted. Your name needs to be attached to the company's news."],
+  ["Link to your profile from everywhere","Add your LinkedIn link to: the Pone team page, your email signature, conference speaker bios, articles you write, the GitHub site. Ask Authenticate to update your title to CEO.","Each link from a trusted site tells Google that your LinkedIn is the main page about you."]
+ ]},
+ {ph:"Ongoing · Upkeep",time:"30 minutes a week",steps:[
+  ["Check your analytics every Monday","Look at profile views, search appearances and which posts worked. Repeat the topics that worked and drop the others.","What gets measured improves. Your best topics will show up within a month."],
+  ["Remove the old results about you","Close or make private the Copains d'avant profile. Ask PagesJaunes to delete your listing. Then use Google's \"Results about you\" and \"Remove outdated content\" tools.","These are the first results on Google today. Removing them lets your LinkedIn rise."],
+  ["Keep a running proof file","Each month, save results you can make public: deals, partners, talks, press quotes, customer feedback. Update the Pone experience and Featured section every quarter.","When an investor, buyer or recruiter looks you up, fresh proof beats a long history."]
+ ]}
+];
+(function(){
+  const total=LI.reduce((s,p)=>s+p.steps.length,0);
+  let done={}; try{done=JSON.parse(localStorage.getItem('li-done')||'{}')}catch(e){}
+  let n=0, html='';
+  LI.forEach(p=>{
+    html+=`<div class="li-phase"><header><h3>${esc(p.ph)}</h3><span class="pill p-na">${esc(p.time)}</span></header>`;
+    p.steps.forEach(([t,how,why,draft])=>{
+      const L=String.fromCharCode(65+n), id='li-'+L; n++;
+      const body=draft?esc(draft).replace(/\[([^\]]+)\]/g,'<span class="ph">[$1]</span>'):'';
+      html+=`<div class="step${done[L]?' done':''}" data-l="${L}"><input type="checkbox" id="${id}"${done[L]?' checked':''} aria-label="Mark step ${L} done"><div class="letter">${L}</div><div><h4>${esc(t)}</h4><p>${esc(how)}</p>${draft?`<div class="draft"><button type="button" class="copy">Copy</button><div class="draft-body">${body}</div></div>`:''}<p class="why"><b>Why:</b> ${esc(why)}</p></div></div>`;
+    });
+    html+='</div>';
+  });
+  const box=document.getElementById('li-steps'); box.innerHTML=html;
+  const upd=()=>{const c=box.querySelectorAll('input:checked').length;document.getElementById('li-count').textContent=`${c} / ${total}`;document.getElementById('li-bar').style.width=(c/total*100)+'%'};
+  box.addEventListener('change',e=>{if(e.target.type!=='checkbox')return;const st=e.target.closest('.step');st.classList.toggle('done',e.target.checked);done[st.dataset.l]=e.target.checked;try{localStorage.setItem('li-done',JSON.stringify(done))}catch(err){}upd()});
+  box.addEventListener('click',e=>{if(!e.target.classList.contains('copy'))return;const b=e.target,txt=b.nextElementSibling.innerText;
+    const ok=()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1500)};
+    const fallback=()=>{const r=document.createRange();r.selectNodeContents(b.nextElementSibling);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected, press Ctrl+C'};
+    try{navigator.clipboard.writeText(txt).then(ok,fallback)}catch(err){fallback()}});
+  upd();
 })();
 
 /* ======================= START ======================= */
