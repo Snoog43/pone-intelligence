@@ -123,7 +123,9 @@ table.method{border-collapse:collapse;width:100%;min-width:900px}
 .kpi{background:var(--sunk);border-radius:6px;padding:10px 12px}
 .kpi b{display:block;font:650 20px var(--f-display);font-variant-numeric:tabular-nums}
 .kpi span{font-size:12px;color:var(--muted)}
-#hist{width:100%;height:240px;display:block}
+#hist{width:100%;height:280px;display:block}
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12.5px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.18);max-width:320px}
+#tip .muted{color:var(--muted)}
 #hist text{fill:var(--muted);font:11px var(--f-mono)}
 table.reg{border-collapse:collapse;width:100%;min-width:760px}
 .reg th,.reg td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top;font-size:13px}
@@ -321,7 +323,7 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
       <div style="display:grid;gap:18px;min-width:0">
         <div class="card">
           <h3 style="font-size:16px">Range of outcomes</h3>
-          <p class="muted" style="margin:4px 0 8px">How often each revenue level came up across the 20,000 simulated futures. The dashed line is the target.</p>
+          <p class="muted" style="margin:4px 0 8px">How often each revenue level came up in the simulations, for all four companies on one log scale. The selected company is highlighted. Hover to compare at any revenue level. The dashed line is the target.</p>
           <svg id="hist" role="img" aria-label="Histogram of simulated revenue"></svg>
         </div>
         <div class="card">
@@ -550,6 +552,7 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
   </div>
 </section>
 
+<div id="tip" role="tooltip" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script>
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -804,7 +807,7 @@ const REP={
     return `<div class="card score" style="border-top:4px solid var(--${c.c})${c.k==='pone'?';box-shadow:0 0 0 2px var(--c-pone)':''}">
       <div class="top"><div><div class="eyebrow">#${i+1}</div><h3 style="font-size:16px">${c.n}</h3></div><span class="pill ${lvl[1]}">${lvl[0]}</span></div>
       <div class="big">${t}<small> / 100</small></div>
-      <div class="comp">${DIM.map(d=>{const v=REP[c.k][d.k];return `<span>${d.n}${v[2]?' <span class="pill p-na">no data</span>':''}</span><span class="v">${v[0]}/${d.w}</span><span class="bar"><i style="width:${v[0]/d.w*100}%;background:var(--${c.c})"></i></span>`}).join('')}</div></div>`;
+      <div class="comp">${DIM.map(d=>{const v=REP[c.k][d.k];return `<span>${d.n}${v[2]?' <span class="pill p-na">no data</span>':''}</span><span class="v">${v[0]}/${d.w}</span><span class="bar" title="${c.n} · ${d.n}: ${v[0]} of ${d.w}"><i style="width:${v[0]/d.w*100}%;background:var(--${c.c})"></i></span>`}).join('')}</div></div>`;
   }).join('');
   document.getElementById('method').innerHTML=`<thead><tr><th>Signal (weight)</th>${CO.map(c=>`<th>${c.n}</th>`).join('')}</tr></thead><tbody>${DIM.map(d=>`<tr><th>${d.n}<br><span class="muted mono" style="font-weight:400">max ${d.w}</span></th>${CO.map(c=>{const v=REP[c.k][d.k];return `<td><span class="s">${v[0]}</span> <span class="muted">/ ${d.w}</span><br>${esc(v[1])}</td>`}).join('')}</tr>`).join('')}</tbody>`;
 })();
@@ -816,20 +819,20 @@ const YEARS=[2027,2028,2029];
 const $=id=>document.getElementById(id);
 const eur=v=>v<1?`€${Math.round(v*1000)}k`:`€${v.toFixed(v<10?1:0)}M`;
 const BR={
- pone:{n:"Pone Biometrics",c:"c-pone",b26:.40,bmin:.15,bmax:1.5,bstep:.05,g:45,gsd:.3,lam:.8,deal:.19,pMega:5,mega:3,pFund:35,pPrice:50,pCert:40,pSupply:12,pTail:50,tail:.25,unit:130,unitName:"cards",staff:8,
+ pone:{n:"Pone Biometrics",c:"c-pone",a25:.30,b26:.40,bmin:.15,bmax:1.5,bstep:.05,g:45,gsd:.3,lam:.8,deal:.19,pMega:5,mega:3,pFund:35,pPrice:50,pCert:40,pSupply:12,pTail:50,tail:.25,unit:130,unitName:"cards",staff:8,
   note:"2026 base: no figure published yet. 2025 product sales were NOK 3.19M (≈ €0.30M), the first real sales year after NOK 0.38M in 2024. Estimate for 2026: NOK 3–6M (≈ €0.29–0.57M).",
   ev:{fund:"Cash NOK 132k at end 2025 vs NOK 13.9M short-term debt; Innovasjon Norge loan (NOK 5M, Sep 2025) and guarantee (NOK 3M, Mar 2026); board cut to two members in Sep 2026.",price:"OFFPAD+ €155 vs YubiKey C Bio €98, Swissbit €26–55, battery-free biometric cards ~$20–39.",cert:"FIDO L1 only (since ~2024); FIPS / Common Criteria planned.",supply:"IDEX is the sole sensor supplier and now sells its own competing card.",tail:"Entra drops SMS / voice MFA on 1 Feb 2027; Norway preparing NIS2 law."}},
- yub:{n:"Yubico",c:"c-yub",b26:199,bmin:150,bmax:260,bstep:1,g:11,gsd:.05,lam:0,deal:0,pMega:0,mega:0,pFund:0,pPrice:20,pCert:5,pSupply:5,pTail:50,tail:.03,unit:45,unitName:"keys",staff:507,
+ yub:{n:"Yubico",c:"c-yub",a25:199.5,b26:199,bmin:150,bmax:260,bstep:1,g:11,gsd:.05,lam:0,deal:0,pMega:0,mega:0,pFund:0,pPrice:20,pCert:5,pSupply:5,pTail:50,tail:.03,unit:45,unitName:"keys",staff:507,
   note:"2026 base: H1 2026 actual SEK 1,023M plus H2 estimate → about SEK 2,210M ≈ €199M. Growth: Q2 2026 organic +11.7%; long-term target 25% (never reached recently).",
   ev:{fund:"Net cash about SEK 989M (June 2026); profitable.",price:"Pressure from Swissbit, Feitian, Token2 and phone-based passkeys.",cert:"FIDO L2, FIPS 140-3, ENS Alta, CSPN.",supply:"Own crypto library since 5.7; secure elements from large suppliers.",tail:"Entra SMS switch-off also lifts hardware-key demand."}},
- idex:{n:"IDEX Biometrics",c:"c-idex",b26:2.5,bmin:1,bmax:6,bstep:.1,g:80,gsd:.4,lam:1.2,deal:.4,pMega:8,mega:3,pFund:45,pPrice:40,pCert:15,pSupply:5,pTail:40,tail:.15,unit:30,unitName:"cards",staff:30,
+ idex:{n:"IDEX Biometrics",c:"c-idex",a25:.26,b26:2.5,bmin:1,bmax:6,bstep:.1,g:80,gsd:.4,lam:1.2,deal:.4,pMega:8,mega:3,pFund:45,pPrice:40,pCert:15,pSupply:5,pTail:40,tail:.15,unit:30,unitName:"cards",staff:30,
   note:"2026 base: Q1–Q3 NOK 10.0M plus Q4 from a NOK 23.7M backlog → about NOK 26M ≈ €2.5M (range €2.1–2.9M). 2025 was about €0.26M, close to Pone's size.",
   ev:{fund:"Cash NOK 28.5M (Q2 2026) vs burn ~NOK 20M a quarter; new dilution likely by early 2027.",price:"Battery-free biometric cards from Sentry (~$20–39), CardLab, Thales.",cert:"FIDO L2 (2026), CC EAL6+ chip.",supply:"Owns the sensor; relies on NXP secure elements.",tail:"Access-control pivot benefits from NIS2 and Entra deadlines."}},
- swiss:{n:"Swissbit (iShield)",c:"c-swiss",b26:10,bmin:3,bmax:25,bstep:.5,g:30,gsd:.12,lam:1,deal:.3,pMega:10,mega:3,pFund:5,pPrice:40,pCert:10,pSupply:5,pTail:50,tail:.08,unit:35,unitName:"keys",staff:null,
+ swiss:{n:"Swissbit (iShield)",c:"c-swiss",a25:7.7,b26:10,bmin:3,bmax:25,bstep:.5,g:30,gsd:.12,lam:1,deal:.3,pMega:10,mega:3,pFund:5,pPrice:40,pCert:10,pSupply:5,pTail:50,tail:.08,unit:35,unitName:"keys",staff:null,
   note:"2026 base: Swissbit publishes no revenue. €10M for the iShield key line is an analyst-style estimate (range €5–20M), not a reported figure. Treat this row as indicative.",
   ev:{fund:"Owned by Ardian, which is exploring a sale (Aug 2026); a new owner could refocus the unit.",price:"Competes on price already (€26–55); pressure from Feitian, Token2.",cert:"FIPS 140-3 L3 and CC EAL6+ through its NXP chip.",supply:"Own factory in Berlin.",tail:"Entra and NIS2 deadlines lift demand for keys."}}
 };
-let brand='pone';
+let brand='pone', lastMain=null;
 const fmt={b26:v=>eur(+v),g:v=>`${v}%`,lam:v=>(+v).toFixed(1),pMega:v=>`${v}%`,pFund:v=>`${v}%`,pPrice:v=>`${v}%`,pCert:v=>`${v}%`,pSupply:v=>`${v}%`,pTail:v=>`${v}%`};
 let seed=1;
 function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
@@ -839,7 +842,7 @@ function poisson(l){const L=Math.exp(-l);let k=0,p=1;do{k++;p*=rand()}while(p>L)
 function read(){const P={...BR[brand]};Object.keys(fmt).forEach(k=>P[k]=+$(k).value);P.target=+$('target').value||0;P.cur=$('cur').value;P.mode=$('mode').value;return P}
 function run(P,N=20000){
   seed=12345;
-  const out=new Float64Array(N);
+  const out=new Float64Array(N), yr=YEARS.map(()=>new Float64Array(N));
   const failWith={fund:0,price:0,cert:0,supply:0}, cnt={fund:0,price:0,cert:0,supply:0};
   const tgt=P.cur==='NOK'?P.target/EURNOK:P.target;
   for(let i=0;i<N;i++){
@@ -855,12 +858,12 @@ function run(P,N=20000){
       for(let d=0,n=poisson(lam);d<n;d++) r+=P.deal*Math.exp(normal(0,.6))*pf;
       if(rand()<P.pMega/100*(ev.cert?.5:1)*(ev.fund?.6:1)) r+=P.mega*Math.exp(normal(0,.5))*pf;
       if(ev.supply&&y===supplyYear) r*=.5;
-      tot+=r; last=r;
+      yr[y][i]=r; tot+=r; last=r;
     }
     const v=P.mode==='cum'?tot:last; out[i]=v;
     for(const k in cnt){ if(ev[k]){cnt[k]++; if(v<tgt) failWith[k]++;} }
   }
-  return {out,tgt,failWith,cnt,N};
+  return {out,tgt,failWith,cnt,N,yr};
 }
 function quant(a,q){const s=Array.from(a).sort((x,y)=>x-y);return s[Math.min(s.length-1,Math.floor(q*s.length))]}
 // Constant yearly growth x such that the target is met with no large deals
@@ -902,23 +905,7 @@ function simulate(){
     [need<=0?'none':`${Math.round(need*100)}% / yr`,'growth needed with no large deals'],
     [`${Math.round(tgt*1e6/P.unit/yrs).toLocaleString('en')}`,`${P.unitName} a year at ~€${P.unit} each`]
   ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
-  // Histogram
-  const el=$('hist'), W=el.clientWidth||600, H=240, m={l:44,r:12,t:10,b:30};
-  const xmin=Math.min(quant(out,.005),tgt*.9), xmax=Math.max(quant(out,.995),tgt*1.1), x0=brand==='yub'?xmin:0;
-  const xs=d3.scaleLinear().domain([x0,xmax]).range([m.l,W-m.r]);
-  const bins=d3.bin().domain([x0,xmax]).thresholds(60)(Array.from(out).filter(v=>v<=xmax&&v>=x0));
-  const ys=d3.scaleLinear().domain([0,d3.max(bins,b=>b.length)]).nice().range([H-m.b,m.t]);
-  const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
-  s.append('g').selectAll('line').data(ys.ticks(4)).join('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',d=>ys(d)).attr('y2',d=>ys(d)).attr('stroke',col('line')).attr('stroke-dasharray','2 3');
-  s.append('g').selectAll('rect').data(bins).join('rect').attr('x',b=>xs(b.x0)+1).attr('width',b=>Math.max(1,xs(b.x1)-xs(b.x0)-1)).attr('y',b=>ys(b.length)).attr('height',b=>ys(0)-ys(b.length)).attr('rx',2)
-    .attr('fill',b=>b.x0>=tgt?col('pos'):col('accent')).attr('fill-opacity',b=>b.x0>=tgt?.9:.6);
-  if(tgt>=x0){
-    s.append('line').attr('x1',xs(tgt)).attr('x2',xs(tgt)).attr('y1',m.t).attr('y2',H-m.b).attr('stroke',col('fg')).attr('stroke-width',1.5).attr('stroke-dasharray','5 4');
-    const tx=xs(tgt), left=tx>W/2;
-    s.append('text').attr('x',left?tx-6:tx+6).attr('text-anchor',left?'end':'start').attr('y',m.t+12).style('fill',col('fg')).style('font-weight',600).text(`Target ${eur(tgt)}`);
-  }
-  s.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(xs).ticks(6).tickFormat(d=>`€${d}M`)).call(a=>a.select('.domain').attr('stroke',col('line'))).call(a=>a.selectAll('line').attr('stroke',col('line')));
-  s.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(ys).ticks(4).tickFormat(d=>(d/N*100).toFixed(0)+'%')).call(a=>a.select('.domain').remove()).call(a=>a.selectAll('line').remove());
+  lastMain={out,tgt,N};
   // What has to be true
   const path=YEARS.map((yr,i)=>`${yr} ≈ ${eur(P.b26*(1+Math.max(need,0))**(i+1))}`).join(', ');
   const comp=brand==='pone'?`<br>2025 for comparison ............ €0.30M (NOK 3.19M) ≈ 2,000 cards`:'';
@@ -934,57 +921,100 @@ function simulate(){
 }
 // All four companies against the same target, with their own presets
 function compareAll(P){
-  const rows=Object.entries(BR).map(([k,b])=>{const Q={...b,target:P.target,cur:P.cur,mode:P.mode};const r=run(Q,4000);const p=Array.from(r.out).filter(v=>v>=r.tgt).length/4000;return {k,b,p,med:quant(r.out,.5),need:needed(r.tgt,b.b26,P.mode)}});
+  const rows=Object.entries(BR).map(([k,b])=>{const Q={...b,target:P.target,cur:P.cur,mode:P.mode};const r=run(Q,4000);const p=Array.from(r.out).filter(v=>v>=r.tgt).length/4000;return {k,b,p,out:r.out,yr:r.yr,med:quant(r.out,.5),need:needed(r.tgt,b.b26,P.mode)}});
   const lmin=Math.log10(.1), lmax=Math.log10(Math.max(...rows.map(r=>r.med))*1.2), w=v=>Math.max(2,(Math.log10(Math.max(v,.1))-lmin)/(lmax-lmin)*100);
   const tg=P.cur==='NOK'?P.target/EURNOK:P.target;
-  $('cmp-all').innerHTML=`<thead><tr><th>Company</th><th>2026 base</th><th>Growth used</th><th>Chance of target</th><th>Growth needed</th><th style="min-width:220px">Median ${P.mode==='cum'?'2027–2029 total':'2029 revenue'} (log scale)</th></tr></thead><tbody>${rows.map(r=>`<tr${r.k===brand?' style="background:var(--accent-bg)"':''}><td><b>${r.b.n}</b>${r.k==='swiss'?' <span class="pill p-na">estimate</span>':''}</td><td class="mono">${eur(r.b.b26)}</td><td class="mono">${r.b.g}%</td><td><span class="pill ${r.p>=.6?'p-good':r.p>=.3?'p-mid':'p-bad'}">${r.p>=.995?'>99':Math.round(r.p*100)}%</span></td><td class="mono">${r.need<=0?'none':Math.round(r.need*100)+'%'}</td><td><div style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:10px;background:var(--sunk);border-radius:5px;position:relative;overflow:hidden"><i style="position:absolute;inset:0 auto 0 0;width:${w(r.med)}%;background:var(--${r.b.c})"></i><i style="position:absolute;top:0;bottom:0;left:${w(tg)}%;width:2px;background:var(--fg)"></i></span><span class="mono" style="min-width:58px;text-align:right">${eur(r.med)}</span></div></td></tr>`).join('')}</tbody>`;
-  pace(P);
+  $('cmp-all').innerHTML=`<thead><tr><th>Company</th><th>2026 base</th><th>Growth used</th><th>Chance of target</th><th>Growth needed</th><th style="min-width:220px">Median ${P.mode==='cum'?'2027–2029 total':'2029 revenue'} (log scale)</th></tr></thead><tbody>${rows.map(r=>`<tr${r.k===brand?' style="background:var(--accent-bg)"':''}><td><b>${r.b.n}</b>${r.k==='swiss'?' <span class="pill p-na">estimate</span>':''}</td><td class="mono">${eur(r.b.b26)}</td><td class="mono">${r.b.g}%</td><td><span class="pill ${r.p>=.6?'p-good':r.p>=.3?'p-mid':'p-bad'}">${r.p>=.995?'>99':Math.round(r.p*100)}%</span></td><td class="mono">${r.need<=0?'none':Math.round(r.need*100)+'%'}</td><td><div style="display:flex;align-items:center;gap:8px" title="${r.b.n}: median ${eur(r.med)} · target ${eur(tg)}"><span style="flex:1;height:10px;background:var(--sunk);border-radius:5px;position:relative;overflow:hidden"><i style="position:absolute;inset:0 auto 0 0;width:${w(r.med)}%;background:var(--${r.b.c})"></i><i style="position:absolute;top:0;bottom:0;left:${w(tg)}%;width:2px;background:var(--fg)"></i></span><span class="mono" style="min-width:58px;text-align:right">${eur(r.med)}</span></div></td></tr>`).join('')}</tbody>`;
+  drawHist(rows,lastMain,P); pace(rows,P);
 }
-// Pone projected at each competitor's growth
-function pace(P){
+// Readable ticks for log axes: 1–3–10 steps inside the domain
+const logTicks=sc=>{const [a,b]=sc.domain();return [.01,.03,.1,.3,1,3,10,30,100,300,1000,3000].filter(v=>v>=a&&v<=b)};
+// Shared hover tooltip for the charts
+const tipEl=document.getElementById('tip');
+function showTip(e,html){tipEl.innerHTML=html;tipEl.hidden=false;const r=tipEl.getBoundingClientRect();let x=e.clientX+14,y=e.clientY+14;if(x+r.width>innerWidth-8)x=e.clientX-r.width-14;if(y+r.height>innerHeight-8)y=e.clientY-r.height-14;tipEl.style.left=x+'px';tipEl.style.top=y+'px'}
+function hideTip(){tipEl.hidden=true}
+const dot=c=>`<i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--${c});margin-right:6px"></i>`;
+
+// Outcome distributions of all four companies on one log axis
+function drawHist(rows,main,P){
+  const el=$('hist'), W=el.clientWidth||700, H=280, m={l:44,r:14,t:16,b:30};
+  const series=rows.map(r=>({k:r.k,b:r.b,out:r.k===brand?main.out:r.out}));
+  const tgt=main.tgt;
+  const lo=Math.min(...series.map(s=>quant(s.out,.005)),tgt*.8), hi=Math.max(...series.map(s=>quant(s.out,.995)),tgt*1.2);
+  const xs=d3.scaleLog().domain([Math.max(lo,.01),hi]).range([m.l,W-m.r]);
+  const NB=70, edges=d3.range(NB+1).map(i=>Math.exp(Math.log(xs.domain()[0])+i*(Math.log(xs.domain()[1])-Math.log(xs.domain()[0]))/NB));
+  series.forEach(s=>{const c=new Array(NB).fill(0);for(const v of s.out){let i=Math.floor((Math.log(v)-Math.log(edges[0]))/(Math.log(edges[NB])-Math.log(edges[0]))*NB);if(i>=0&&i<NB)c[i]++}s.share=c.map(x=>x/s.out.length);s.med=quant(s.out,.5)});
+  const ymax=d3.max(series,s=>d3.max(s.share));
+  const ys=d3.scaleLinear().domain([0,ymax]).nice().range([H-m.b,m.t]);
+  const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
+  s.append('g').selectAll('line').data(ys.ticks(4)).join('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',d=>ys(d)).attr('y2',d=>ys(d)).attr('stroke',col('line')).attr('stroke-dasharray','2 3');
+  const mid=i=>Math.sqrt(edges[i]*edges[i+1]);
+  const area=d3.area().x((d,i)=>xs(mid(i))).y0(ys(0)).y1(d=>ys(d)).curve(d3.curveMonotoneX);
+  const ordered=[...series].sort((a,b)=>(a.k===brand)-(b.k===brand));
+  ordered.forEach(sr=>{const on=sr.k===brand;
+    s.append('path').attr('d',area(sr.share)).attr('fill',col(sr.b.c)).attr('fill-opacity',on?.45:.18).attr('stroke',col(sr.b.c)).attr('stroke-width',on?2.2:1.2);
+    const pi=sr.share.indexOf(d3.max(sr.share));
+    s.append('text').attr('x',xs(mid(pi))).attr('y',ys(sr.share[pi])-6).attr('text-anchor','middle').style('fill',col(sr.b.c)).style('font-size','11.5px').style('font-weight',650).text(sr.k==='pone'?'Pone':sr.b.n.split(' ')[0]);
+  });
+  s.append('line').attr('x1',xs(tgt)).attr('x2',xs(tgt)).attr('y1',m.t).attr('y2',H-m.b).attr('stroke',col('fg')).attr('stroke-width',1.5).attr('stroke-dasharray','5 4');
+  s.append('text').attr('x',xs(tgt)+5).attr('y',m.t+4).style('fill',col('fg')).style('font-size','11px').style('font-weight',600).text(`Target ${eur(tgt)}`);
+  s.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(xs).tickValues(logTicks(xs)).tickFormat(d=>eur(d))).call(a=>a.select('.domain').attr('stroke',col('line'))).call(a=>a.selectAll('line').attr('stroke',col('line')));
+  s.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(ys).ticks(4).tickFormat(d=>(d*100).toFixed(0)+'%')).call(a=>a.select('.domain').remove()).call(a=>a.selectAll('line').remove());
+  const guide=s.append('line').attr('y1',m.t).attr('y2',H-m.b).attr('stroke',col('muted')).attr('stroke-width',1).style('display','none');
+  s.append('rect').attr('x',m.l).attr('y',m.t).attr('width',W-m.l-m.r).attr('height',H-m.t-m.b).attr('fill','transparent')
+    .on('pointermove',e=>{const [mx]=d3.pointer(e);const v=xs.invert(mx);let i=Math.floor((Math.log(v)-Math.log(edges[0]))/(Math.log(edges[NB])-Math.log(edges[0]))*NB);i=Math.max(0,Math.min(NB-1,i));guide.attr('x1',mx).attr('x2',mx).style('display',null);
+      showTip(e,`<b>${eur(edges[i])} – ${eur(edges[i+1])}</b>${series.map(sr=>`<div>${dot(sr.b.c)}${sr.k==='pone'?'Pone':sr.b.n}: ${(sr.share[i]*100).toFixed(1)}% of scenarios <span class="muted">· median ${eur(sr.med)}</span></div>`).join('')}`)})
+    .on('pointerleave',()=>{guide.style('display','none');hideTip()});
+}
+
+// All four companies 2025–2029, plus Pone at its competitors' pace
+function pace(rows,P){
   const pb=brand==='pone'?P.b26:BR.pone.b26, tgt=P.cur==='NOK'?P.target/EURNOK:P.target;
   const need=Math.max(0,needed(tgt,pb,P.mode));
-  const L=[
-    {n:"Market pace (FIDO2 keys, ~19%)",g:.19,c:"neu"},
-    {n:"Yubico's current pace (+11%)",g:.11,c:"c-yub"},
-    {n:"Yubico's own target (+25%)",g:.25,c:"c-yub",dash:"2 3"},
-    {n:"Swissbit iShield (~30%, est.)",g:.30,c:"c-swiss"},
-    {n:"IDEX expected pace (+80%)",g:.80,c:"c-idex"},
-    {n:`Needed for ${P.cur==='NOK'?'NOK ':'€'}${P.target}M (+${Math.round(need*100)}%)`,g:need,c:"fg",dash:"6 4"}
-  ];
   const yrs=[2025,2026,...YEARS];
-  L.forEach(l=>{l.v=[.30,pb,...YEARS.map((_,i)=>pb*(1+l.g)**(i+1))];l.cum=l.v.slice(2).reduce((a,b)=>a+b,0)});
-  const el=$('pace'), W=el.clientWidth||700, H=320, m={l:56,r:190,t:12,b:30};
-  const xs=d3.scalePoint().domain(yrs).range([m.l,W-m.r]);
-  const all=L.flatMap(l=>l.v), ys=d3.scaleLog().domain([.2,Math.max(...all)*1.3]).range([H-m.b,m.t]);
+  const L=rows.map(r=>({n:r.k==='pone'?'Pone (model)':r.k==='swiss'?'Swissbit iShield (est.)':r.b.n,c:r.b.c,w:3,main:true,
+    v:[r.b.a25,r.b.b26,...YEARS.map((_,i)=>quant(r.yr[i],.5))],note:r.k==='swiss'?'Swissbit publishes no revenue: estimate':'2025 actual · 2026 estimate · 2027–29 model median'}));
+  const alt=[
+    {n:"Pone at market pace (+19%)",g:.19,c:"neu"},
+    {n:"Pone at Yubico's target (+25%)",g:.25,c:"c-yub"},
+    {n:"Pone at IDEX's pace (+80%)",g:.80,c:"c-idex"},
+    {n:`Pone, path needed for ${P.cur==='NOK'?'NOK ':'€'}${P.target}M (+${Math.round(need*100)}%)`,g:need,c:"fg"}
+  ].map(a=>({...a,w:1.6,dash:"6 4",v:[.30,pb,...YEARS.map((_,i)=>pb*(1+a.g)**(i+1))],note:'Pone 2026 base grown at this rate'}));
+  const all=[...L,...alt];
+  const el=$('pace'), W=el.clientWidth||700, H=360, m={l:58,r:Math.min(230,W*.34),t:14,b:30};
+  const xs=d3.scalePoint().domain(yrs).range([m.l,W-m.r]).padding(.1);
+  const vals=all.flatMap(l=>l.v), ys=d3.scaleLog().domain([Math.min(...vals)*.7,Math.max(...vals)*1.4]).range([H-m.b,m.t]);
   const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
-  s.append('g').selectAll('line').data(ys.ticks(5)).join('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',d=>ys(d)).attr('y2',d=>ys(d)).attr('stroke',col('line')).attr('stroke-dasharray','2 3');
-  s.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(ys).ticks(5,"~g").tickFormat(d=>eur(d))).call(a=>a.select('.domain').remove()).call(a=>a.selectAll('line').remove()).call(a=>a.selectAll('text').style('fill',col('muted')));
+  s.append('g').selectAll('line').data(logTicks(ys)).join('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',d=>ys(d)).attr('y2',d=>ys(d)).attr('stroke',col('line')).attr('stroke-dasharray','2 3');
+  s.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(ys).tickValues(logTicks(ys)).tickFormat(d=>eur(d))).call(a=>a.select('.domain').remove()).call(a=>a.selectAll('line').remove()).call(a=>a.selectAll('text').style('fill',col('muted')));
   s.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(xs)).call(a=>a.select('.domain').attr('stroke',col('line'))).call(a=>a.selectAll('line').attr('stroke',col('line'))).call(a=>a.selectAll('text').style('fill',col('muted')));
   s.append('line').attr('x1',xs(2026)).attr('x2',xs(2026)).attr('y1',m.t).attr('y2',H-m.b).attr('stroke',col('line'));
   s.append('text').attr('x',xs(2026)+4).attr('y',H-m.b-6).style('fill',col('muted')).style('font-size','11px').text('projection →');
   const line=d3.line().x((d,i)=>xs(yrs[i])).y(d=>ys(d));
   const lab=[];
-  L.forEach(l=>{
-    s.append('path').attr('d',line(l.v)).attr('fill','none').attr('stroke',col(l.c)).attr('stroke-width',l.c==='fg'?2:2.5).attr('stroke-dasharray',l.dash||null);
-    s.append('circle').attr('cx',xs(2029)).attr('cy',ys(l.v[4])).attr('r',3.5).attr('fill',col(l.c));
-    lab.push({y:ys(l.v[4]),t:`${l.n} · ${eur(l.v[4])}`,c:col(l.c)});
+  all.forEach(l=>{
+    const g=s.append('g');
+    g.append('path').attr('d',line(l.v)).attr('fill','none').attr('stroke',col(l.c)).attr('stroke-width',l.w).attr('stroke-dasharray',l.dash||null).attr('stroke-opacity',l.main?1:.85);
+    g.append('path').attr('d',line(l.v)).attr('fill','none').attr('stroke','transparent').attr('stroke-width',14).style('cursor','pointer')
+      .on('pointermove',e=>showTip(e,`<b>${dot(l.c)}${esc(l.n)}</b><div class="muted">${esc(l.note)}</div><div>2029: ${eur(l.v[4])} · 2027–29 total ${eur(l.v.slice(2).reduce((a,b)=>a+b,0))}</div>`)).on('pointerleave',hideTip);
+    if(l.main) l.v.forEach((v,i)=>g.append('circle').attr('cx',xs(yrs[i])).attr('cy',ys(v)).attr('r',4.5).attr('fill',col(l.c)).attr('stroke',col('surface')).attr('stroke-width',1.5).style('cursor','pointer')
+      .on('pointermove',e=>showTip(e,`<b>${dot(l.c)}${esc(l.n)} · ${yrs[i]}</b><div>${eur(v)}</div><div class="muted">${i===0?'2025 actual':i===1?'2026 estimate':'model median'}</div>`)).on('pointerleave',hideTip));
+    lab.push({y:ys(l.v[4]),t:`${l.n.replace(' (model)','')} · ${eur(l.v[4])}`,c:col(l.c),b:l.main});
   });
-  lab.sort((a,b)=>a.y-b.y); for(let i=1;i<lab.length;i++) if(lab[i].y-lab[i-1].y<15) lab[i].y=lab[i-1].y+15;
-  lab.forEach(l=>s.append('text').attr('x',W-m.r+10).attr('y',l.y+4).style('fill',l.c).style('font-size','11.5px').style('font-weight',600).text(l.t));
-  s.append('circle').attr('cx',xs(2025)).attr('cy',ys(.30)).attr('r',4).attr('fill',col('c-pone'));
-  s.append('text').attr('x',xs(2025)+6).attr('y',ys(.30)-8).style('fill',col('fg')).style('font-size','11px').text('2025 actual €0.30M');
-  const best=L.filter(l=>l.c!=='fg').sort((a,b)=>b.cum-a.cum)[0];
+  lab.sort((a,b)=>a.y-b.y); for(let i=1;i<lab.length;i++) if(lab[i].y-lab[i-1].y<14) lab[i].y=lab[i-1].y+14;
+  lab.forEach(l=>s.append('text').attr('x',W-m.r+10).attr('y',l.y+4).style('fill',l.c).style('font-size',l.b?'12px':'11px').style('font-weight',l.b?700:500).text(l.t));
+  const ponePath=alt.slice(0,3), best=ponePath.reduce((a,b)=>b.v.slice(2).reduce((x,y)=>x+y,0)>a.v.slice(2).reduce((x,y)=>x+y,0)?b:a);
+  const cum=l=>l.v.slice(2).reduce((a,b)=>a+b,0);
   $('pace-kpis').innerHTML=[
-    [eur(L[0].cum),'Pone 2027–29 at market pace'],
-    [eur(L[2].cum),"at Yubico's 25% target"],
-    [eur(best.cum),`at the fastest pace (${best.n.split(' (')[0]})`],
+    [eur(cum(L.find(l=>l.n.startsWith('Pone')))),'Pone 2027–29, model median'],
+    [eur(cum(alt[0])),'Pone at market pace'],
+    [eur(cum(best)),`Pone at ${best.n.replace('Pone at ','')}`],
     [eur(tgt),`target · needs +${Math.round(need*100)}% a year`]
   ].map(([b,s2])=>`<div class="kpi"><b>${b}</b><span>${s2}</span></div>`).join('');
   // Revenue per employee
-  const R=[["Yubico",BR.yub.b26,507,"c-yub","2026 est. €199M / 507 staff"],["IDEX Biometrics",BR.idex.b26,30,"c-idex","€2.5M / ~30 staff (19–39 reported)"],["Pone Biometrics",pb,8,"c-pone","€0.40M / ~8 people (team page 6, LinkedIn 9)"]];
+  const R=[["Yubico",BR.yub.b26,507,"c-yub","2026 est. €199M / 507 staff"],["IDEX Biometrics",BR.idex.b26,30,"c-idex","€2.5M / ~30 staff (19–39 reported)"],["Pone Biometrics",pb,8,"c-pone",`${eur(pb)} / ~8 people (team page 6, LinkedIn 9)`]];
   const mx=Math.max(...R.map(r=>r[1]/r[2]));
-  $('rpe').innerHTML=`<div style="overflow-x:auto"><table class="reg"><thead><tr><th>Company</th><th style="min-width:220px">Revenue per employee</th><th>Basis</th><th>Pone with 8 people at this level</th></tr></thead><tbody>${R.map(r=>{const v=r[1]/r[2];return `<tr><td><b>${r[0]}</b></td><td><div style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:10px;background:var(--sunk);border-radius:5px;overflow:hidden"><i style="display:block;height:100%;width:${v/mx*100}%;background:var(--${r[3]})"></i></span><span class="mono">${eur(v)}</span></div></td><td class="muted">${r[4]}</td><td class="mono">${eur(v*8)} / yr</td></tr>`}).join('')}<tr><td><b>Swissbit</b></td><td class="muted">not published</td><td class="muted">No revenue disclosed; ~450 staff across memory and security</td><td>—</td></tr></tbody></table></div><p class="muted" style="font-size:12.5px;margin:8px 0 0">Even at Yubico's productivity, eight people would bring about €3M a year. A €20M three-year target needs a much larger team or a partner that sells for you.</p>`;
+  $('rpe').innerHTML=`<div style="overflow-x:auto"><table class="reg"><thead><tr><th>Company</th><th style="min-width:220px">Revenue per employee</th><th>Basis</th><th>Pone with 8 people at this level</th></tr></thead><tbody>${R.map(r=>{const v=r[1]/r[2];return `<tr><td><b>${r[0]}</b></td><td><div style="display:flex;align-items:center;gap:8px" title="${r[0]}: ${eur(v)} per employee"><span style="flex:1;height:10px;background:var(--sunk);border-radius:5px;overflow:hidden"><i style="display:block;height:100%;width:${v/mx*100}%;background:var(--${r[3]})"></i></span><span class="mono">${eur(v)}</span></div></td><td class="muted">${r[4]}</td><td class="mono">${eur(v*8)} / yr</td></tr>`}).join('')}<tr><td><b>Swissbit</b></td><td class="muted">not published</td><td class="muted">No revenue disclosed; ~450 staff across memory and security</td><td>—</td></tr></tbody></table></div><p class="muted" style="font-size:12.5px;margin:8px 0 0">Even at Yubico's productivity, eight people would bring about €3M a year. A €20M three-year target needs a much larger team or a partner that sells for you.</p>`;
 }
 $('brands').addEventListener('click',e=>{const b=e.target.closest('.tier');if(b)loadBrand(b.dataset.k)});
 
@@ -1059,7 +1089,7 @@ const ADV=[
    ["Partner co-marketing with the 27 resellers (quarterly kit)",[2,5,8,11],"accent"],
    ["Results review and 2028 plan",[12,13],"neu"]
   ];
-  $('gantt').innerHTML=`<thead><tr><th></th>${M.map((m,i)=>`<th>${m}<br><span class="muted">${i<2?'2026':'2027'}</span></th>`).join('')}</tr></thead><tbody>${G.map(([n,ms,c])=>`<tr><th scope="row">${esc(n)}</th>${M.map((_,i)=>`<td>${ms.includes(i)?`<i style="background:var(--${c})"></i>`:''}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  $('gantt').innerHTML=`<thead><tr><th></th>${M.map((m,i)=>`<th>${m}<br><span class="muted">${i<2?'2026':'2027'}</span></th>`).join('')}</tr></thead><tbody>${G.map(([n,ms,c])=>`<tr><th scope="row">${esc(n)}</th>${M.map((_,i)=>`<td>${ms.includes(i)?`<i title="${esc(n)} · ${M[i]} ${i<2?2026:2027}" style="background:var(--${c})"></i>`:''}</td>`).join('')}</tr>`).join('')}</tbody>`;
 
   const C=[
    ["IT managers and Entra / Microsoft 365 admins, 200–2,000 staff, Norway, Sweden, France, DACH","They choose and deploy the authenticator","LinkedIn ads by job title and skill, webinars with Microsoft experts, partner mailings","Dec 2026 – Mar 2027, then ongoing"],
