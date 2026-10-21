@@ -368,6 +368,91 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
       <div id="rpe"></div>
     </div>
 
+    <div style="margin-top:8px">
+      <div class="eyebrow">Optimisation · built on Pone's internal figures</div>
+      <h2 style="font-size:22px">What it takes to reach €20M</h2>
+      <p class="lede">This section uses the figures you gave on 21 October 2026: 4,000 cards already produced and paid for, a €150 list price, a €68 production cost for new cards, a 25% partner discount, 170 customers, 23 signed partners, and sales up from 50 to 150 cards a month. It replaces the public-data guesses above wherever they overlap.</p>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:16px">Unit economics today</h3>
+      <div class="kpis" id="ue"></div>
+      <p class="muted" style="margin:0;font-size:12.5px" id="ue-note"></p>
+    </div>
+
+    <div class="card" style="display:grid;gap:8px">
+      <h3 style="font-size:16px">The gap in one line</h3>
+      <div class="math" id="gap"></div>
+    </div>
+
+    <div class="risk-grid">
+      <div class="card controls-card" id="opt-controls">
+        <div class="eyebrow">Unit economics</div>
+        <div class="ctl"><label for="o-list">List price per card <output id="ov-list"></output></label><input type="range" id="o-list" min="90" max="220" step="5" value="150"></div>
+        <div class="ctl"><label for="o-disc">Partner discount <output id="ov-disc"></output></label><input type="range" id="o-disc" min="0" max="45" step="1" value="25"></div>
+        <div class="ctl"><label for="o-cogs">Production cost, new cards <output id="ov-cogs"></output></label><input type="range" id="o-cogs" min="30" max="110" step="1" value="68"></div>
+        <div class="eyebrow">Engine 1 · partners</div>
+        <div class="ctl"><label for="o-p1">Active partners by end 2029 <output id="ov-p1"></output></label><input type="range" id="o-p1" min="23" max="200" step="1" value="80"><small>23 signed today.</small></div>
+        <div class="ctl"><label for="o-c1">Cards per partner per month, end 2029 <output id="ov-c1"></output></label><input type="range" id="o-c1" min="6" max="150" step="1" value="60"><small>About 6.5 today (150 cards a month across 23 partners).</small></div>
+        <div class="eyebrow">Engine 2 · direct large accounts</div>
+        <div class="ctl"><label for="o-d29">Large direct deals in 2029 <output id="ov-d29"></output></label><input type="range" id="o-d29" min="0" max="60" step="1" value="24"><small>Ramps from a quarter of this in 2027 to 60% in 2028. No partner discount.</small></div>
+        <div class="ctl"><label for="o-dsize">Cards per large deal <output id="ov-dsize"></output></label><input type="range" id="o-dsize" min="50" max="2000" step="50" value="400"></div>
+        <div class="eyebrow">Engine 3 · public or defence rollout</div>
+        <div class="ctl"><label for="o-gov">Cards in one national rollout (2028–29) <output id="ov-gov"></output></label><input type="range" id="o-gov" min="0" max="100000" step="5000" value="30000"><small>Delivered over 18 months from April 2028 at €120. Needs FIDO L2 and CC or FIPS first.</small></div>
+        <div class="eyebrow">Engine 4 · OEM / white label</div>
+        <div class="ctl"><label for="o-oem">OEM cards per month from July 2028 <output id="ov-oem"></output></label><input type="range" id="o-oem" min="0" max="10000" step="250" value="3000"><small>A larger vendor sells OFFPAD under its brand at €85 a card.</small></div>
+        <div class="eyebrow">Recurring</div>
+        <div class="ctl"><label for="o-att">Customers taking the €2/month support plan <output id="ov-att"></output></label><input type="range" id="o-att" min="0" max="100" step="5" value="50"></div>
+        <button class="btn" id="opt-reset">Reset to the €20M plan</button>
+        <button class="btn" id="opt-flat">Show "keep 150 a month"</button>
+      </div>
+      <div style="display:grid;gap:18px;min-width:0">
+        <div class="card verdict-box">
+          <svg class="gauge" id="opt-gauge" viewBox="0 0 140 140" aria-label="Share of the target reached"></svg>
+          <div style="display:grid;gap:10px">
+            <h2 id="opt-verdict" style="font-size:19px">…</h2>
+            <div class="kpis" id="opt-kpis"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:16px">Monthly revenue by engine, 2027–2029</h3>
+          <p class="muted" style="margin:4px 0 8px;font-size:13px">Hover to see each month. The dotted line is today's pace held flat at 150 cards a month.</p>
+          <svg id="opt-chart" role="img" aria-label="Monthly revenue by sales engine" style="width:100%;height:300px;display:block"></svg>
+          <div class="keyrow" id="opt-legend" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:16px">Should you keep the salespeople?</h3>
+      <p style="margin:0"><b>Yes, but change what they do.</b> With a €44.50 margin on a partner card, a salesperson costing about €100k a year has to drive about 2,250 partner cards a year just to pay for themselves. Selling small deals directly does not reach that. Large accounts and partner management do.</p>
+      <div style="overflow-x:auto"><table class="reg" id="sales-roles"></table></div>
+      <ul style="margin:0;padding-left:18px;display:grid;gap:4px;font-size:13.5px">
+        <li><b>Stop selling deals under 50 cards directly.</b> Route them to partners, who already earn 25% on them.</li>
+        <li><b>Pay on sell-out, not sell-in.</b> Commission on cards actually activated by customers, so partners do not overstock.</li>
+        <li><b>Tier the partners.</b> 25% discount as standard; 30% for partners above 500 cards a year; 20% for partners below 50. Put your time on the top 10.</li>
+        <li><b>Raise the deal size.</b> At today's average order (roughly 10–25 cards per customer across 170 customers), €20M would need 7,000–18,000 new customers. At 400 cards per deal, it needs about 450.</li>
+      </ul>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:16px">Action plan to reach €20M</h3>
+      <div style="overflow-x:auto"><table class="reg">
+        <thead><tr><th>When</th><th>Action</th><th>Why it matters for €20M</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Q4 2026</td><td><b>Sell the 4,000 cards in stock first</b> through a partner campaign around the Entra SMS deadline.</td><td>Each card is pure cash (production already paid): about €450k at partner prices, enough to fund the first steps below.</td></tr>
+          <tr><td class="mono">Q4 2026</td><td><b>Raise working capital for production</b>: supplier terms, an Innovasjon Norge guarantee, partner prepayments on large orders.</td><td>The €20M plan needs about €11–12M of new cards produced; cash leaves before revenue arrives.</td></tr>
+          <tr><td class="mono">Q1 2027</td><td><b>Hire one channel manager and one enterprise seller</b>; move existing sellers into these two roles.</td><td>Partners must go from 6.5 to about 60 cards a month each, and large deals need a dedicated closer.</td></tr>
+          <tr><td class="mono">Q1 2027</td><td><b>Launch a tiered partner programme</b> and recruit to 40 active partners by end 2027, 80 by end 2029.</td><td>Partners carry about 40% of the plan.</td></tr>
+          <tr><td class="mono">Q1–Q3 2027</td><td><b>Get FIDO Level 2, then start Common Criteria or FIPS.</b></td><td>Without them, the public rollout (about 18% of the plan) cannot be bid.</td></tr>
+          <tr><td class="mono">2027</td><td><b>Sign one OEM / white-label partner</b> (an identity group, card maker or MSP platform) for deliveries from mid-2028.</td><td>OEM is about 23% of the plan and the fastest way to scale without a large sales team.</td></tr>
+          <tr><td class="mono">2027</td><td><b>Sell subscriptions, not just cards</b>: hardware + support + replacement per user per month.</td><td>Recurring revenue grows every month and makes large customers easier to win.</td></tr>
+          <tr><td class="mono">2028</td><td><b>Bid national and defence tenders</b> in Norway, then the Nordics and France.</td><td>One 30,000-card rollout is worth about €3.6M.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted" style="font-size:12.5px;margin:0">The plan above is one combination that reaches €20M. Move the sliders to test others. It assumes the engines grow in a straight line, ignores operating costs other than sales staff, and does not include price erosion; the risk model above covers those uncertainties.</p>
+    </div>
+
     <div class="card" style="display:grid;gap:12px">
       <h3 style="font-size:16px">Pone in detail: what the public record shows</h3>
       <p class="muted" style="margin:0;font-size:13px">From the Brønnøysund register and accounts, the Research Council project bank and Innovasjon Norge records (via Proff), read on 21 October 2026. Amounts in NOK.</p>
@@ -819,8 +904,8 @@ const YEARS=[2027,2028,2029];
 const $=id=>document.getElementById(id);
 const eur=v=>v<1?`€${Math.round(v*1000)}k`:`€${v.toFixed(v<10?1:0)}M`;
 const BR={
- pone:{n:"Pone Biometrics",c:"c-pone",a25:.30,b26:.40,bmin:.15,bmax:1.5,bstep:.05,g:45,gsd:.3,lam:.8,deal:.19,pMega:5,mega:3,pFund:35,pPrice:50,pCert:40,pSupply:12,pTail:50,tail:.25,unit:130,unitName:"cards",staff:8,
-  note:"2026 base: no figure published yet. 2025 product sales were NOK 3.19M (≈ €0.30M), the first real sales year after NOK 0.38M in 2024. Estimate for 2026: NOK 3–6M (≈ €0.29–0.57M).",
+ pone:{n:"Pone Biometrics",c:"c-pone",a25:.30,b26:.25,bmin:.15,bmax:1.5,bstep:.05,g:45,gsd:.3,lam:.8,deal:.19,pMega:5,mega:3,pFund:35,pPrice:50,pCert:40,pSupply:12,pTail:50,tail:.25,unit:112.5,unitName:"cards",staff:8,
+  note:"2026 base from Pone's internal figures: 150 cards a month at €112.50 net (list €150 − 25% partner discount) ≈ €0.20M a year, up from 50 a month earlier in 2026. Public 2025 product sales were NOK 3.19M (≈ €0.30M). Base set at €0.25M; sales tripled recently, so you may raise the growth slider.",
   ev:{fund:"Cash NOK 132k at end 2025 vs NOK 13.9M short-term debt; Innovasjon Norge loan (NOK 5M, Sep 2025) and guarantee (NOK 3M, Mar 2026); board cut to two members in Sep 2026.",price:"OFFPAD+ €155 vs YubiKey C Bio €98, Swissbit €26–55, battery-free biometric cards ~$20–39.",cert:"FIDO L1 only (since ~2024); FIPS / Common Criteria planned.",supply:"IDEX is the sole sensor supplier and now sells its own competing card.",tail:"Entra drops SMS / voice MFA on 1 Feb 2027; Norway preparing NIS2 law."}},
  yub:{n:"Yubico",c:"c-yub",a25:199.5,b26:199,bmin:150,bmax:260,bstep:1,g:11,gsd:.05,lam:0,deal:0,pMega:0,mega:0,pFund:0,pPrice:20,pCert:5,pSupply:5,pTail:50,tail:.03,unit:45,unitName:"keys",staff:507,
   note:"2026 base: H1 2026 actual SEK 1,023M plus H2 estimate → about SEK 2,210M ≈ €199M. Growth: Q2 2026 organic +11.7%; long-term target 25% (never reached recently).",
@@ -925,7 +1010,7 @@ function compareAll(P){
   const lmin=Math.log10(.1), lmax=Math.log10(Math.max(...rows.map(r=>r.med))*1.2), w=v=>Math.max(2,(Math.log10(Math.max(v,.1))-lmin)/(lmax-lmin)*100);
   const tg=P.cur==='NOK'?P.target/EURNOK:P.target;
   $('cmp-all').innerHTML=`<thead><tr><th>Company</th><th>2026 base</th><th>Growth used</th><th>Chance of target</th><th>Growth needed</th><th style="min-width:220px">Median ${P.mode==='cum'?'2027–2029 total':'2029 revenue'} (log scale)</th></tr></thead><tbody>${rows.map(r=>`<tr${r.k===brand?' style="background:var(--accent-bg)"':''}><td><b>${r.b.n}</b>${r.k==='swiss'?' <span class="pill p-na">estimate</span>':''}</td><td class="mono">${eur(r.b.b26)}</td><td class="mono">${r.b.g}%</td><td><span class="pill ${r.p>=.6?'p-good':r.p>=.3?'p-mid':'p-bad'}">${r.p>=.995?'>99':Math.round(r.p*100)}%</span></td><td class="mono">${r.need<=0?'none':Math.round(r.need*100)+'%'}</td><td><div style="display:flex;align-items:center;gap:8px" title="${r.b.n}: median ${eur(r.med)} · target ${eur(tg)}"><span style="flex:1;height:10px;background:var(--sunk);border-radius:5px;position:relative;overflow:hidden"><i style="position:absolute;inset:0 auto 0 0;width:${w(r.med)}%;background:var(--${r.b.c})"></i><i style="position:absolute;top:0;bottom:0;left:${w(tg)}%;width:2px;background:var(--fg)"></i></span><span class="mono" style="min-width:58px;text-align:right">${eur(r.med)}</span></div></td></tr>`).join('')}</tbody>`;
-  drawHist(rows,lastMain,P); pace(rows,P);
+  drawHist(rows,lastMain,P); pace(rows,P); optim();
 }
 // Readable ticks for log axes: 1–3–10 steps inside the domain
 const logTicks=sc=>{const [a,b]=sc.domain();return [.01,.03,.1,.3,1,3,10,30,100,300,1000,3000].filter(v=>v>=a&&v<=b)};
@@ -937,7 +1022,7 @@ const dot=c=>`<i style="display:inline-block;width:9px;height:9px;border-radius:
 
 // Outcome distributions of all four companies on one log axis
 function drawHist(rows,main,P){
-  const el=$('hist'), W=el.clientWidth||700, H=280, m={l:44,r:14,t:16,b:30};
+  const el=$('hist'), W=Math.max(el.clientWidth,360), H=280, m={l:44,r:14,t:16,b:30};
   const series=rows.map(r=>({k:r.k,b:r.b,out:r.k===brand?main.out:r.out}));
   const tgt=main.tgt;
   const lo=Math.min(...series.map(s=>quant(s.out,.005)),tgt*.8), hi=Math.max(...series.map(s=>quant(s.out,.995)),tgt*1.2);
@@ -981,7 +1066,7 @@ function pace(rows,P){
     {n:`Pone, path needed for ${P.cur==='NOK'?'NOK ':'€'}${P.target}M (+${Math.round(need*100)}%)`,g:need,c:"fg"}
   ].map(a=>({...a,w:1.6,dash:"6 4",v:[.30,pb,...YEARS.map((_,i)=>pb*(1+a.g)**(i+1))],note:'Pone 2026 base grown at this rate'}));
   const all=[...L,...alt];
-  const el=$('pace'), W=el.clientWidth||700, H=360, m={l:58,r:Math.min(230,W*.34),t:14,b:30};
+  const el=$('pace'), W=Math.max(el.clientWidth,360), H=360, m={l:58,r:Math.min(230,W*.34),t:14,b:30};
   const xs=d3.scalePoint().domain(yrs).range([m.l,W-m.r]).padding(.1);
   const vals=all.flatMap(l=>l.v), ys=d3.scaleLog().domain([Math.min(...vals)*.7,Math.max(...vals)*1.4]).range([H-m.b,m.t]);
   const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
@@ -1016,6 +1101,94 @@ function pace(rows,P){
   const mx=Math.max(...R.map(r=>r[1]/r[2]));
   $('rpe').innerHTML=`<div style="overflow-x:auto"><table class="reg"><thead><tr><th>Company</th><th style="min-width:220px">Revenue per employee</th><th>Basis</th><th>Pone with 8 people at this level</th></tr></thead><tbody>${R.map(r=>{const v=r[1]/r[2];return `<tr><td><b>${r[0]}</b></td><td><div style="display:flex;align-items:center;gap:8px" title="${r[0]}: ${eur(v)} per employee"><span style="flex:1;height:10px;background:var(--sunk);border-radius:5px;overflow:hidden"><i style="display:block;height:100%;width:${v/mx*100}%;background:var(--${r[3]})"></i></span><span class="mono">${eur(v)}</span></div></td><td class="muted">${r[4]}</td><td class="mono">${eur(v*8)} / yr</td></tr>`}).join('')}<tr><td><b>Swissbit</b></td><td class="muted">not published</td><td class="muted">No revenue disclosed; ~450 staff across memory and security</td><td>—</td></tr></tbody></table></div><p class="muted" style="font-size:12.5px;margin:8px 0 0">Even at Yubico's productivity, eight people would bring about €3M a year. A €20M three-year target needs a much larger team or a partner that sells for you.</p>`;
 }
+// Optimisation: four sales engines, monthly from Jan 2027 to Dec 2029, using Pone's internal figures
+const OPT_DEF={list:150,disc:25,cogs:68,p1:80,c1:60,d29:24,dsize:400,gov:30000,oem:3000,att:50};
+const OPT_FLAT={list:150,disc:25,cogs:68,p1:23,c1:6.5,d29:0,dsize:400,gov:0,oem:0,att:50};
+const OPT_FIX={stock:4000,p0:23,c0:150/23,dprice:135,gprice:120,gStart:15,gLen:18,oemStart:18,oemPrice:85,sub:2,target:20e6};
+const ENG=[{k:"p",n:"Partners",c:"c-pone"},{k:"d",n:"Direct large accounts",c:"c-yub"},{k:"g",n:"Public rollout",c:"c-swiss"},{k:"oem",n:"OEM",c:"c-idex"},{k:"sub",n:"Support subscriptions",c:"gap"}];
+const MONTHS=d3.range(36).map(t=>new Date(2027,t,1));
+function optRead(){const o={};Object.keys(OPT_DEF).forEach(k=>o[k]=+$('o-'+k).value);return o}
+function optCalc(o){
+  const F=OPT_FIX, net=o.list*(1-o.disc/100); let stock=F.stock, base=0, prod=0, cards=0, stockOut=null; const rows=[], tot={p:0,d:0,g:0,oem:0,sub:0};
+  const dYear=[o.d29*.25,o.d29*.58,o.d29];
+  for(let t=0;t<36;t++){
+    const f=t/35, pc=(F.p0+(o.p1-F.p0)*f)*(F.c0+(o.c1-F.c0)*f);
+    const dc=dYear[Math.floor(t/12)]/12*o.dsize;
+    const gc=(t>=F.gStart&&t<F.gStart+F.gLen)?o.gov/F.gLen:0;
+    const oc=t>=F.oemStart?o.oem:0;
+    const sold=pc+dc+gc+oc; cards+=sold;
+    base+=(pc+dc+gc)*o.att/100;
+    const r={p:pc*net,d:dc*F.dprice,g:gc*F.gprice,oem:oc*F.oemPrice,sub:base*F.sub};
+    const fromStock=Math.min(stock,sold); stock-=fromStock; prod+=sold-fromStock; if(stock<=0&&stockOut===null) stockOut=t;
+    for(const k in tot) tot[k]+=r[k];
+    rows.push({...r,cards:sold,date:MONTHS[t]});
+  }
+  const rev=Object.values(tot).reduce((a,b)=>a+b,0), cost=prod*o.cogs;
+  return {rows,tot,rev,cards,prod,cost,gm:rev-cost,stockOut,net};
+}
+function optim(){
+  const o=optRead(); const fm={list:v=>`€${v}`,disc:v=>`${v}%`,cogs:v=>`€${v}`,p1:v=>v,c1:v=>v,d29:v=>v,dsize:v=>(+v).toLocaleString('en'),gov:v=>(+v).toLocaleString('en'),oem:v=>(+v).toLocaleString('en'),att:v=>`${v}%`};
+  Object.keys(fm).forEach(k=>$('ov-'+k).textContent=fm[k]($('o-'+k).value));
+  const R=optCalc(o), F=OPT_FIX, flat=optCalc(OPT_FLAT);
+  const net=R.net, m=net-o.cogs, md=o.list-o.cogs;
+  // Unit economics
+  $('ue').innerHTML=[
+    [`€${net.toFixed(2)}`,`net per partner card (€${o.list} − ${o.disc}%)`],
+    [`€${m.toFixed(2)} · ${Math.round(m/net*100)}%`,'margin per partner card on new production'],
+    [`€${md.toFixed(0)} · ${Math.round(md/o.list*100)}%`,'margin per direct card at list price'],
+    [`€${Math.round(F.stock*net/1000)}k`,'cash in the 4,000 cards in stock (cost already paid)'],
+    [`${Math.round(F.stock/150)} months`,'stock lasts at 150 cards a month'],
+    [`€${Math.round(150*12*net/1000)}k / yr`,'today\'s run-rate (150 a month via partners)']
+  ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
+  $('ue-note').textContent=`Sales tripled in recent months (50 → 150 cards a month). Partner productivity is about 6.5 cards per partner per month. 170 customers so far. The 4,000 produced cards are treated as unsold stock; if part is already sold, the stock cash shrinks accordingly.`;
+  // Gap
+  const need=(()=>{let lo=0,hi=1;for(let i=0;i<60;i++){const r=(lo+hi)/2;let s=0;for(let t=0;t<36;t++)s+=150*(1+r)**t*net;s<F.target?lo=r:hi=r}return lo})();
+  $('gap').innerHTML=`Keep 150 cards a month ........ ${eur(flat.rev/1e6)} over 2027–2029 (${(flat.cards/1000).toFixed(1)}k cards)<br>€20M through partners only .... ${Math.round(F.target/net).toLocaleString('en')} cards = +${(need*100).toFixed(1)}% every month for 36 months (≈ ${Math.round(150*(1+need)**35).toLocaleString('en')} cards a month by Dec 2029)<br>Conclusion .................... one channel cannot do it; the plan below combines four engines`;
+  // Verdict
+  const share=R.rev/F.target, pct=Math.round(share*100), color=share>=1?col('pos'):share>=.5?col('gap'):col('neg'), a=Math.PI*2*Math.min(share,1), x=70+56*Math.sin(a), y=70-56*Math.cos(a);
+  $('opt-gauge').innerHTML=`<circle cx="70" cy="70" r="56" fill="none" stroke="${col('sunk')}" stroke-width="14"/>`+(share>=.999?`<circle cx="70" cy="70" r="56" fill="none" stroke="${color}" stroke-width="14"/>`:share>.005?`<path d="M70 14 A56 56 0 ${a>Math.PI?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}" fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round"/>`:'')+`<text x="70" y="72" text-anchor="middle" font-family="Sora,sans-serif" font-size="28" font-weight="650" fill="${col('fg')}">${pct}%</text><text x="70" y="94" text-anchor="middle" font-size="11" fill="${col('muted')}">of €20M</text>`;
+  $('opt-verdict').textContent=share>=1?`This plan reaches ${eur(R.rev/1e6)} over 2027–2029: the €20M target is met`:`This plan reaches ${eur(R.rev/1e6)} over 2027–2029: ${eur((F.target-R.rev)/1e6)} short of €20M`;
+  const sh=k=>Math.round(R.tot[k]/R.rev*100);
+  $('opt-kpis').innerHTML=[
+    [`${Math.round(R.cards).toLocaleString('en')}`,'cards sold in three years'],
+    [`${Math.round(R.prod).toLocaleString('en')}`,`new cards to produce after the stock · ${eur(R.cost/1e6)} production cash`],
+    [`${eur(R.gm/1e6)} · ${Math.round(R.gm/R.rev*100)}%`,'gross margin after production'],
+    [R.stockOut===null?'not used up':MONTHS[R.stockOut].toLocaleString('en',{month:'short',year:'numeric'}),'stock of 4,000 runs out'],
+    [`${sh('p')}% / ${sh('d')}% / ${sh('g')}% / ${sh('oem')}% / ${sh('sub')}%`,'partners / direct / public / OEM / support']
+  ].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
+  // Stacked chart
+  const el=$('opt-chart'), W=Math.max(el.clientWidth,360), H=300, mg={l:56,r:12,t:12,b:28};
+  const st=d3.stack().keys(ENG.map(e=>e.k))(R.rows);
+  const xs=d3.scaleTime().domain([MONTHS[0],MONTHS[35]]).range([mg.l,W-mg.r]);
+  const ys=d3.scaleLinear().domain([0,d3.max(R.rows,r=>ENG.reduce((s,e)=>s+r[e.k],0))*1.08]).nice().range([H-mg.b,mg.t]);
+  const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
+  s.append('g').selectAll('line').data(ys.ticks(5)).join('line').attr('x1',mg.l).attr('x2',W-mg.r).attr('y1',d=>ys(d)).attr('y2',d=>ys(d)).attr('stroke',col('line')).attr('stroke-dasharray','2 3');
+  const ar=d3.area().x((d,i)=>xs(MONTHS[i])).y0(d=>ys(d[0])).y1(d=>ys(d[1])).curve(d3.curveMonotoneX);
+  st.forEach((layer,i)=>s.append('path').attr('d',ar(layer)).attr('fill',col(ENG[i].c)).attr('fill-opacity',.75).attr('stroke',col(ENG[i].c)).attr('stroke-width',1));
+  const fl=d3.line().x((d,i)=>xs(MONTHS[i])).y(d=>ys(ENG.reduce((s2,e)=>s2+d[e.k],0)));
+  s.append('path').attr('d',fl(flat.rows)).attr('fill','none').attr('stroke',col('fg')).attr('stroke-width',1.5).attr('stroke-dasharray','2 3');
+  s.append('g').attr('transform',`translate(${mg.l},0)`).call(d3.axisLeft(ys).ticks(5).tickFormat(d=>eur(d/1e6))).call(a=>a.select('.domain').remove()).call(a=>a.selectAll('line').remove()).call(a=>a.selectAll('text').style('fill',col('muted')));
+  s.append('g').attr('transform',`translate(0,${H-mg.b})`).call(d3.axisBottom(xs).ticks(d3.timeMonth.every(6)).tickFormat(d3.timeFormat('%b %Y'))).call(a=>a.select('.domain').attr('stroke',col('line'))).call(a=>a.selectAll('line').attr('stroke',col('line'))).call(a=>a.selectAll('text').style('fill',col('muted')));
+  const guide=s.append('line').attr('y1',mg.t).attr('y2',H-mg.b).attr('stroke',col('fg')).attr('stroke-width',1).style('display','none');
+  s.append('rect').attr('x',mg.l).attr('y',mg.t).attr('width',W-mg.l-mg.r).attr('height',H-mg.t-mg.b).attr('fill','transparent')
+    .on('pointermove',e=>{const [mx]=d3.pointer(e);const t=Math.max(0,Math.min(35,Math.round((xs.invert(mx)-MONTHS[0])/(MONTHS[35]-MONTHS[0])*35)));const r=R.rows[t];guide.attr('x1',xs(MONTHS[t])).attr('x2',xs(MONTHS[t])).style('display',null);
+      const tot2=ENG.reduce((a2,e2)=>a2+r[e2.k],0);
+      showTip(e,`<b>${MONTHS[t].toLocaleString('en',{month:'long',year:'numeric'})} · ${eur(tot2/1e6)}</b>${[...ENG].reverse().map(e2=>`<div>${dot(e2.c)}${e2.n}: ${eur(r[e2.k]/1e6)}</div>`).join('')}<div class="muted">${Math.round(r.cards).toLocaleString('en')} cards this month · flat pace ${eur(ENG.reduce((a2,e2)=>a2+flat.rows[t][e2.k],0)/1e6)}</div>`)})
+    .on('pointerleave',()=>{guide.style('display','none');hideTip()});
+  $('opt-legend').innerHTML=ENG.map(e=>`<span style="--b:var(--${e.c})">${e.n} · ${eur(R.tot[e.k]/1e6)}</span>`).join('')+`<span style="--b:transparent;border-bottom:2px dotted var(--fg)">Flat at 150/month · ${eur(flat.rev/1e6)}</span>`;
+  // Sales roles
+  const roles=[
+    ["Channel manager","1 per ~15–20 active partners (2 → 4 by 2029)","~€100k","~2,250 partner cards a year","Recruit, train and push partners; owns partner sell-out"],
+    ["Enterprise seller","2, then 3 from 2028","~€120k","~1,450 direct cards a year ≈ 4 deals of 400","Closes large accounts and public tenders directly"],
+    ["OEM / alliances lead (CEO at first)","1, part time","in the CEO role","one OEM contract","Signs and manages the white-label partner"],
+    ["Inside sales / support","1","~€60k","~1,350 partner cards a year","Qualifies inbound leads, handles small orders for partners"]
+  ];
+  $('sales-roles').innerHTML=`<thead><tr><th>Role</th><th>How many</th><th>Cost per year</th><th>Break-even with current margins</th><th>Job</th></tr></thead><tbody>${roles.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="mono">${r[2]}</td><td>${r[3]}</td><td class="muted">${r[4]}</td></tr>`).join('')}</tbody>`;
+}
+let ot; document.querySelectorAll('#opt-controls input').forEach(e=>e.addEventListener('input',()=>{clearTimeout(ot);ot=setTimeout(optim,40)}));
+$('opt-reset').onclick=()=>{Object.entries(OPT_DEF).forEach(([k,v])=>$('o-'+k).value=v);optim()};
+$('opt-flat').onclick=()=>{Object.entries(OPT_FLAT).forEach(([k,v])=>$('o-'+k).value=v);optim()};
+
 $('brands').addEventListener('click',e=>{const b=e.target.closest('.tier');if(b)loadBrand(b.dataset.k)});
 
 let tm; function schedule(){clearTimeout(tm);tm=setTimeout(simulate,60)}
