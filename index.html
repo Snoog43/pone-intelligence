@@ -738,6 +738,7 @@ function show(v){
   if(v==='risk') requestAnimationFrame(()=>{ if(!$('brands').children.length) loadBrand(brand); else simulate(); });
   if(v==='camp') requestAnimationFrame(campSim);
   if(v==='plan') renderPlan();
+  if(v==='prod') requestAnimationFrame(renderProd);
   if(v==='sales') requestAnimationFrame(()=>{ if(!$('s-actuals').children.length) renderActuals(); renderSales(); });
   if(location.hash.slice(1)!==v) history.replaceState(null,'','#'+v);
 }
@@ -1638,6 +1639,122 @@ $('s-copy').onclick=e=>{const txt='month,cards\n'+Object.keys(sAct).sort().map(k
   try{navigator.clipboard.writeText(txt).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy as CSV',1500)},()=>{b.textContent='Copy failed'})}catch(err){b.textContent='Copy failed'}};
 $('s-clear').onclick=()=>{sAct={'2026-09':150};try{localStorage.setItem('sales-actuals',JSON.stringify(sAct))}catch(err){}renderActuals();renderSales()};
 [['s-view',v=>sView=v],['s-unit',v=>sUnit=v],['s-range',v=>sRange=v]].forEach(([id,set])=>$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-checked',x===b));set(b.dataset.v);renderSales()}));
+
+/* ======================= PRODUCT & COST ======================= */
+// Components at 10k units: sourcing file (Sept 2021, SEK at 11.12 per euro) vs 2026 market; [est] = no public price
+const BOM=[
+ ["PCB (NCAB quote, estimate in the file)",10.79,"4-layer flex ~$4.6 per card at list price; €1.5–3 in Asia at 10k, ×1.5–2.5 in the EU",4.0,"Re-quote; 2-layer flex, test in panel, Qi coil etched in the flex"],
+ ["E-paper display 1.1\" (Plastic Logic)",10.04,"Pervasive 1.54\" from $4.06 at qty 1; €2.5–4 with flex cable at 10k [est]",4.0,"Re-quote Plastic Logic against Pervasive and E Ink thin panels"],
+ ["Bluetooth MCU STM32WB55",5.40,"nRF54L15 $2.48 at 1k (built-in NFC tag); ~€1.9 at 10k",1.9,"Move to nRF54L15 at the next hardware revision"],
+ ["Fingerprint sensor (IDEX)",4.18,"No public price; €7–12 at 10k estimated for card sensors [est]",4.18,"Keep the 2021 price in writing; second-source FPC T-Shape"],
+ ["Resistors, capacitors, inductors",3.28,"Same parts at LCSC / volume reels: about €1.5–2",2.0,"Consolidate values, buy reels"],
+ ["Flash, RTC, power switch, protection, RF filter, transistors",2.61,"nRF54L15 has its own RTC and 1.5 MB flash",1.6,"Remove external flash and RTC with the new MCU"],
+ ["Battery charger + gauge (no price in the file)",1.20,"€0.3–0.8 for charger and USB-C [est]",0.8,"Single charger-with-gauge IC"],
+ ["Battery cell (NGK)",2.43,"Thin LiPo €1.0–1.8 at 10k (Sujor, Grepow quotes) [est]",1.6,"RFQ to Grepow and two Asian cell makers"],
+ ["Qi receiver BQ51003",1.53,"TI BQ51013B $1.24–1.94; the BQ5100x family is not recommended for new designs",1.3,"Replace at the next revision"],
+ ["Crystals (2)",1.12,"Standard 32 MHz and 32 kHz crystals ~€0.3 each",0.6,"Standard parts"],
+ ["Secure element Infineon SLJ52 (CC EAL6+)",0.95,"Comparable CC EAL6+ elements €1.5–4",0.95,"Keep: already cheap"],
+ ["Card body and lamination (not in the file)",2.00,"€1–3 [est]",1.5,"Automate lamination"]
+];
+const MFG_NOW=28, MFG_OPT=10;
+const PT=[
+ {k:"low",n:"OFFPAD Go",tag:"Low end",c:"c-swiss",list:45,comp:11,mfg:3,
+  f:["Fingerprint on the card, FIDO2","NFC only, powered by the phone or reader","No battery, no Bluetooth, no display","Optional door access (DESFire)"],
+  vs:"SentryCard (~$23 MSRP), Thales FIDO Bio card, IDEX card; plain FIDO2 cards €13–37",
+  build:"Battery-free card sensor + dual-interface secure element; reference designs exist (Infineon SECORA Pay Bio with FPC, IDEX). COGS €11–19 at 10k, €7–12 at 100k.",
+  risk:"Puts Pone against IDEX, its own sensor supplier. Needs a way to enrol the fingerprint without a battery (sleeve or phone)."},
+ {k:"mid",n:"OFFPAD Bio",tag:"Mid range",c:"c-yub",list:79,comp:18.5,mfg:8,
+  f:["Fingerprint on the card, FIDO2","Bluetooth + NFC, rechargeable battery","USB-C or contact charging, no Qi","No display (status LED)"],
+  vs:"ATKey.Card (~€60–69), Kensington VeriMark ($70), YubiKey 5 (€58), YubiKey Bio (€98)",
+  build:"Today's design without display and Qi, on the nRF54L15 and a 2-layer flex. Same sensor and secure element.",
+  risk:"Needs its own FIDO, Bluetooth and CE certification (€80–150k)."},
+ {k:"high",n:"OFFPAD+",tag:"High end",c:"c-pone",list:155,comp:24.4,mfg:10,
+  f:["Everything in OFFPAD Bio","E-ink display: see what you approve","Qi and USB-C charging","Add FIPS 140-3 or Common Criteria to justify the price"],
+  vs:"YubiKey FIPS (€88–115), YubiKey Bio (€98), Crayonic KeyVault (~$199), Token BLE devices ($249–279)",
+  build:"Today's product, cost-optimised: new PCB and display quotes, nRF54L15, assembly in the Baltics or Poland.",
+  risk:"Keep the price; the margin comes from the cost-down, not from a price cut."}
+];
+const MKT=[ // name, € ex VAT, feature level 0–4, card?
+ ["Token2 FIDO2 NFC card",13,0,1],["HID Crescendo FIDO card",22,0,1],["Identiv uTrust FIDO2",25,0,0],["Token2 PIN+",26.5,0,0],["Titan Security Key",28,0,0],["Yubico Security Key",29,0,0],["Nitrokey Passkey",29,0,0],
+ ["YubiKey 5 NFC",58,1,0],["Nitrokey 3 NFC",57,1,0],["YubiKey 5Ci",85,1,0],["YubiKey 5 FIPS",88,1,0],
+ ["SentryCard (battery-free)",20,2,1],["Token2 PIN+ Bio3",37,2,0],["Feitian BioPass K26",52,2,0],["Kensington VeriMark Guard",61,2,0],["Excelsecu FIDO2 fingerprint",76,2,0],["Feitian BioPass K45",83,2,0],["YubiKey Bio",98,2,0],
+ ["ATKey.Card (AuthenTrend)",60,3,1],["Token Ring",217,3,0],["TokenCore Portable+",243,3,0],
+ ["Crayonic KeyVault (old price)",173,4,0],["OFFPAD+ today",155,4,1]
+];
+const LV=["FIDO2 only","+ PIV / FIPS","+ fingerprint","+ fingerprint + Bluetooth","+ fingerprint + Bluetooth + display"];
+let prodDrawn=false;
+function renderProd(){
+  const tNow=BOM.reduce((s,b)=>s+b[1],0), tOpt=BOM.reduce((s,b)=>s+b[3],0);
+  $('bom').innerHTML=`<thead><tr><th>Line</th><th>Today, 10k</th><th style="min-width:160px"></th><th>2026 market</th><th>Target</th><th>Saving</th><th>Lever</th></tr></thead><tbody>${BOM.map(b=>`<tr><td><b>${esc(b[0])}</b></td><td class="mono">€${b[1].toFixed(2)}</td><td><div title="${esc(b[0])}: €${b[1].toFixed(2)} today, target €${b[3].toFixed(2)}" style="position:relative;height:10px;background:var(--sunk);border-radius:5px"><i style="position:absolute;inset:0 auto 0 0;width:${b[1]/11*100}%;background:var(--neg);opacity:.35;border-radius:5px"></i><i style="position:absolute;inset:0 auto 0 0;width:${b[3]/11*100}%;background:var(--pos);border-radius:5px"></i></div></td><td class="muted">${esc(b[2])}</td><td class="mono">€${b[3].toFixed(2)}</td><td class="mono">${b[1]-b[3]>0.05?`<span class="pill p-good">−€${(b[1]-b[3]).toFixed(2)}</span>`:'—'}</td><td>${esc(b[4])}</td></tr>`).join('')}
+    <tr><td><b>Components</b></td><td class="mono"><b>€${tNow.toFixed(2)}</b></td><td></td><td class="muted">Your current figure: €40 (some lines already cheaper than in 2021)</td><td class="mono"><b>€${tOpt.toFixed(2)}</b></td><td class="mono"><span class="pill p-good">−€${(tNow-tOpt).toFixed(2)}</span></td><td></td></tr>
+    <tr><td><b>Manufacturing, test, lamination</b></td><td class="mono"><b>€${MFG_NOW}</b></td><td></td><td class="muted">Sweden €8–14 at 10k; Estonia/Poland €5–9; Asia €3–6 [est]. Labour: Sweden €47/h, Estonia €20/h, Poland €17/h</td><td class="mono"><b>€${MFG_OPT}</b></td><td class="mono"><span class="pill p-good">−€${MFG_NOW-MFG_OPT}</span></td><td>Move to an EMS in the Baltics or Poland (Hanza, Kitron, Incap); automate enrolment and RF test</td></tr>
+    <tr><td><b>Cost of goods</b></td><td class="mono"><b>€68 (yours)</b></td><td></td><td></td><td class="mono"><b>€${(tOpt+MFG_OPT).toFixed(0)}</b></td><td class="mono"><span class="pill p-good">−€${(68-tOpt-MFG_OPT).toFixed(0)}</span></td><td></td></tr></tbody>`;
+  // Stacked bars: today vs optimised
+  const el=$('cost-bars'), W=Math.max(el.clientWidth,360), H=200, m={l:90,r:20,t:10,b:24};
+  const groups=[["Today",[...BOM.map(b=>b[1]*40/tNow),MFG_NOW]],["Optimised",[...BOM.map(b=>b[3]),MFG_OPT]]];
+  const names=[...BOM.map(b=>b[0]),"Manufacturing, test, lamination"];
+  const pal=["c-pone","c-yub","c-idex","c-swiss","neu","gap","accent","pos","neg","c-pone","c-yub","c-idex","fg"];
+  const xs=d3.scaleLinear().domain([0,70]).range([m.l,W-m.r]), ys=d3.scaleBand().domain(groups.map(g=>g[0])).range([m.t,H-m.b]).padding(.3);
+  const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
+  groups.forEach(([g,vals])=>{let x0=0;vals.forEach((v,i)=>{s.append('rect').attr('x',xs(x0)).attr('y',ys(g)).attr('width',Math.max(0,xs(x0+v)-xs(x0)-1)).attr('height',ys.bandwidth()).attr('fill',col(pal[i])).attr('fill-opacity',i===vals.length-1?.35:.8).style('cursor','pointer')
+      .on('pointermove',e=>showTip(e,`<b>${esc(names[i])}</b><div>${g}: €${v.toFixed(2)}</div>`)).on('pointerleave',hideTip);x0+=v});
+    s.append('text').attr('x',m.l-8).attr('y',ys(g)+ys.bandwidth()/2+4).attr('text-anchor','end').style('fill',col('fg')).style('font-weight',600).style('font-size','12.5px').text(`${g} €${vals.reduce((a,b)=>a+b,0).toFixed(0)}`)});
+  s.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(xs).ticks(7).tickFormat(d=>`€${d}`)).call(a=>a.select('.domain').attr('stroke',col('line'))).call(a=>a.selectAll('line').attr('stroke',col('line'))).call(a=>a.selectAll('text').style('fill',col('muted')));
+  $('cost-legend').innerHTML=`<span class="muted" style="font-size:12.5px">Today's components are scaled to your €40 figure. Light grey block = manufacturing. Hover any block for the line.</span>`;
+  // Tiers
+  $('tiers-prod').innerHTML=PT.map(t=>`<div class="card path" style="border-top:4px solid var(--${t.c})"><div class="eyebrow">${t.tag}</div><h3>${t.n}</h3>
+    <ul>${t.f.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="ctl"><label for="lp-${t.k}">List price ex VAT <output id="lpo-${t.k}">€${t.list}</output></label><input type="range" id="lp-${t.k}" min="${t.k==='low'?25:t.k==='mid'?49:99}" max="${t.k==='low'?79:t.k==='mid'?129:199}" step="1" value="${t.list}"></div>
+    <div class="kpis" id="pm-${t.k}"></div>
+    <p class="muted" style="margin:0;font-size:12.5px"><b>Against:</b> ${esc(t.vs)}</p>
+    <p class="muted" style="margin:0;font-size:12.5px"><b>How to build it:</b> ${esc(t.build)}</p>
+    <p class="muted" style="margin:0;font-size:12.5px"><b>Watch out:</b> ${esc(t.risk)}</p></div>`).join('');
+  PT.forEach(t=>$('lp-'+t.k).addEventListener('input',e=>{t.list=+e.target.value;tierCalc()}));
+  tierCalc();
+  // Roadmap
+  const RM=[
+   ["Move assembly to an EMS in the Baltics or Poland","about €18","Request quotes from Hanza, Kitron, Incap; transfer and first-article test","Q1–Q2 2027","Transfer cost; keep Sweden as backup for the first batch"],
+   ["Re-quote the PCB and simplify the flex","€6–7","Two-layer flex if the layout allows; EU and Asian flex makers","Q1 2027","Small layout change; low risk"],
+   ["Re-quote the display","about €6","Plastic Logic against Pervasive Displays and E Ink","Q1 2027","Mechanical fit and driver change if the supplier changes"],
+   ["Switch to the nRF54L15 Bluetooth chip","€3.5 + €1 (no external flash/RTC)","Firmware port at the next hardware revision","H2 2027","6–9 months of firmware work; FIDO and Bluetooth recertification"],
+   ["Consolidate passives, battery and crystals","about €2.5","Buy reels; RFQ to Grepow for the battery","Q4 2026","None"],
+   ["Second-source the fingerprint sensor","risk, not price","Qualify an FPC T-Shape sensor","2027","IDEX is fragile and now a competitor"],
+   ["Launch OFFPAD Bio (mid range)","new tier","Remove display and Qi from the optimised design","H2 2027","€80–150k certification"],
+   ["Launch OFFPAD Go (low end)","new tier","Battery-free card with a sensor and secure-element reference design","2028","New design; competes with IDEX"]
+  ];
+  $('roadmap').innerHTML=`<thead><tr><th>Action</th><th>Saving per card</th><th>How</th><th>When</th><th>Cost or risk</th></tr></thead><tbody>${RM.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td class="mono">${esc(r[1])}</td><td>${esc(r[2])}</td><td class="mono">${esc(r[3])}</td><td class="muted">${esc(r[4])}</td></tr>`).join('')}</tbody>`;
+  drawMarket();
+}
+function tierCalc(){
+  const rows=[];
+  PT.forEach(t=>{const cogs=t.comp+t.mfg, net=t.list*.75, m=net-cogs;
+    $('lpo-'+t.k).textContent=`€${t.list}`;
+    $('pm-'+t.k).innerHTML=[[`€${cogs.toFixed(0)}`,`cost of goods (components €${t.comp} + making €${t.mfg})`],[`€${net.toFixed(2)}`,'partner price'],[`€${m.toFixed(2)} · ${Math.round(m/net*100)}%`,'gross margin per card']].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
+    rows.push([t.n,net,cogs,m]);});
+  rows.push(["OFFPAD+ today (€155, COGS €68)",116.25,68,48.25]);
+  $('tier-20m').innerHTML=`<thead><tr><th>Product</th><th>Partner price</th><th>Cost of goods</th><th>Margin per card</th><th>Cards for €20M</th><th>Gross margin on €20M</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td class="mono">€${r[1].toFixed(2)}</td><td class="mono">€${r[2].toFixed(0)}</td><td class="mono">€${r[3].toFixed(2)} (${Math.round(r[3]/r[1]*100)}%)</td><td class="mono">${Math.round(20e6/r[1]).toLocaleString('en')}</td><td class="mono">${eur(20*r[3]/r[1])}</td></tr>`).join('')}</tbody>`;
+  if(prodDrawn) drawMarket();
+}
+function drawMarket(){
+  prodDrawn=true;
+  const el=$('market-map'), W=Math.max(el.clientWidth,360), H=380, m={l:56,r:16,t:16,b:70};
+  const xs=d3.scalePoint().domain(d3.range(5)).range([m.l+50,W-m.r-60]);
+  const ys=d3.scaleLog().domain([10,300]).range([H-m.b,m.t]);
+  const s=d3.select(el).attr('viewBox',`0 0 ${W} ${H}`); s.selectAll('*').remove();
+  [10,20,30,50,80,150,300].forEach(v=>{s.append('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',ys(v)).attr('y2',ys(v)).attr('stroke',col('line')).attr('stroke-dasharray','2 3');s.append('text').attr('x',m.l-6).attr('y',ys(v)+4).attr('text-anchor','end').style('fill',col('muted')).style('font-size','11px').text(`€${v}`)});
+  [[10,30,'Low < €30'],[30,80,'Mid €30–80'],[80,300,'High > €80']].forEach(([a,b,t],i)=>{s.append('rect').attr('x',m.l).attr('width',W-m.l-m.r).attr('y',ys(b)).attr('height',ys(a)-ys(b)).attr('fill',col(['c-swiss','c-yub','c-pone'][i])).attr('fill-opacity',.05);s.append('text').attr('x',W-m.r-4).attr('y',ys(b)+14).attr('text-anchor','end').style('fill',col('muted')).style('font-size','11px').text(t)});
+  ["FIDO2 only","+ PIV / FIPS","+ fingerprint","+ Bluetooth","+ display"].forEach((l,i)=>s.append('text').attr('x',xs(i)).attr('y',H-m.b+20).attr('text-anchor','middle').style('fill',col('muted')).style('font-size','12px').text(l));
+  const jit=(n)=>{let h=0;for(const ch of n)h=(h*31+ch.charCodeAt(0))%997;return (h/997-.5)*60};
+  MKT.forEach(([n,p,lv,card])=>{const x=xs(lv)+jit(n),y=ys(p),pone=n.startsWith('OFFPAD');
+    const g=s.append('g').style('cursor','pointer').on('pointermove',e=>showTip(e,`<b>${esc(n)}</b><div>€${p} ex VAT · ${card?'card':'key or device'}</div><div class="muted">${LV[lv]}</div>`)).on('pointerleave',hideTip);
+    if(card) g.append('rect').attr('x',x-5).attr('y',y-5).attr('width',10).attr('height',10).attr('rx',2).attr('fill',col(pone?'c-pone':'neu')).attr('fill-opacity',pone?.5:.75);
+    else g.append('circle').attr('cx',x).attr('cy',y).attr('r',5).attr('fill',col('neu')).attr('fill-opacity',.75);});
+  PT.forEach(t=>{const lv=t.k==='low'?2:t.k==='mid'?3:4, x=xs(lv)+(t.k==='high'?28:0), y=ys(t.list);
+    s.append('rect').attr('x',x-8).attr('y',y-8).attr('width',16).attr('height',16).attr('rx',3).attr('fill',col('c-pone')).attr('stroke',col('surface')).attr('stroke-width',2).style('cursor','pointer')
+      .on('pointermove',e=>showTip(e,`<b>Pone · ${t.n}</b><div>€${t.list} ex VAT · proposed ${t.tag.toLowerCase()}</div><div class="muted">${t.f.slice(0,2).join(' · ')}</div>`)).on('pointerleave',hideTip);
+    s.append('text').attr('x',t.k==='high'?x-12:x+12).attr('text-anchor',t.k==='high'?'end':'start').attr('y',t.k==='high'?y-12:y+4).style('fill',col('c-pone')).style('font-size','12px').style('font-weight',700).text(t.n)});
+  s.append('text').attr('x',m.l).attr('y',H-8).style('fill',col('muted')).style('font-size','11px').text('Squares = cards, circles = keys or devices. Grey = competitors.');
+}
 
 /* ======================= LINKEDIN A–Z ======================= */
 const LI=[
