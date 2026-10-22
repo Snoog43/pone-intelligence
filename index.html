@@ -211,6 +211,7 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
   <button role="tab" id="t-camp" aria-selected="false" data-v="camp">Campaign 2027</button>
   <button role="tab" id="t-plan" aria-selected="false" data-v="plan">Big plan 2027</button>
   <button role="tab" id="t-sales" aria-selected="false" data-v="sales">Sales evolution</button>
+  <button role="tab" id="t-prod" aria-selected="false" data-v="prod">Product & cost</button>
   <button role="tab" id="t-li" aria-selected="false" data-v="li">LinkedIn A–Z</button>
 </nav>
 
@@ -700,6 +701,65 @@ table.gantt{border-collapse:collapse;width:100%;min-width:900px}
   </div>
 </section>
 
+<!--PROD-START-->
+<!-- ============ PRODUCT & COST ============ -->
+<section class="view page" id="v-prod" role="tabpanel" hidden>
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Product & cost · built on Pone's sourcing file and 2026 market prices</div>
+      <h2 style="font-size:24px">Three tiers, and a card that costs half as much to make</h2>
+      <p class="lede">This tab starts from Pone's own "Master Sourcing OFFPAD" file (September 2021, prices in SEK at 1k, 10k and 100k units), the €40 components + €28 manufacturing you gave, and a sweep of 2026 component, PCB and assembly prices plus about 35 competing products. Prices for the fingerprint sensor, the secure element and assembly are not public; those lines are estimates and need supplier quotes.</p>
+    </div>
+
+    <div class="card" style="display:grid;gap:8px">
+      <h3 style="font-size:16px">The short answer</h3>
+      <ul style="margin:0;padding-left:18px;display:grid;gap:4px">
+        <li><b>OFFPAD+ is not overpriced for what it is.</b> The only devices with fingerprint, Bluetooth and a display sell for about €170–240. The gap is elsewhere: Pone has nothing between €15 and €80, where most of the volume sells.</li>
+        <li><b>Its cost can fall from €68 to about €35</b> without removing a feature: a new PCB and display quote, a cheaper Bluetooth chip, and assembly in the Baltics or Poland instead of Sweden.</li>
+        <li><b>Add two cheaper tiers</b>: a battery-free fingerprint card around €45 and a fingerprint + Bluetooth card without display around €79. Both keep a gross margin above 50% at partner prices.</li>
+      </ul>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:16px">Today's cost of goods, line by line</h3>
+      <p class="muted" style="margin:0;font-size:13px">Components from the sourcing file at 10,000 units, converted at today's 11.12 SEK per euro, next to 2026 market prices. Hover a bar for the detail.</p>
+      <div style="overflow-x:auto"><table class="reg" id="bom"></table></div>
+      <p class="muted" style="margin:0;font-size:12.5px">The file has no price for the battery charger (MAX77734) and the battery gauge (LC709203F), and no line for the card body and lamination; they are added as estimates. Manufacturing is your €28 figure.</p>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:16px">Where the €68 goes, today vs optimised</h3>
+      <svg id="cost-bars" role="img" aria-label="Cost per card today and after optimisation" style="width:100%;height:200px;display:block"></svg>
+      <div class="keyrow" id="cost-legend"></div>
+    </div>
+
+    <div>
+      <h2 style="font-size:20px">Three tiers</h2>
+      <p class="lede">Each tier uses parts from today's design where possible. Change the list price to see the margin at partner prices (25% discount).</p>
+    </div>
+    <div class="paths" id="tiers-prod"></div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:16px">Where the tiers sit in the market</h3>
+      <p class="muted" style="margin:0;font-size:13px">Price excluding VAT (log scale) against what the product does. Hover a dot for the product. Pone's proposed tiers are the large blue dots.</p>
+      <svg id="market-map" role="img" aria-label="Market map of FIDO2 authenticators by price and features" style="width:100%;height:380px;display:block"></svg>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:16px">Cost-down roadmap</h3>
+      <div style="overflow-x:auto"><table class="reg" id="roadmap"></table></div>
+      <p class="muted" style="margin:0;font-size:12.5px">Each new tier or a new chip needs fresh certification (FIDO, Bluetooth, CE/RED, FCC): about €80–150k per model, or €8–15 per card over 10,000 cards and about €1 over 100,000.</p>
+    </div>
+
+    <div class="card" style="display:grid;gap:10px">
+      <h3 style="font-size:16px">What it means for the €20M plan</h3>
+      <div style="overflow-x:auto"><table class="reg" id="tier-20m"></table></div>
+      <p class="muted" style="margin:0;font-size:12.5px">Cheaper tiers need more cards for the same revenue, but they open the €30–80 segment where most buyers are, and they carry better margins than today's OFFPAD+. A mix keeps the high tier for admins and the mid tier for broad workforce rollouts.</p>
+    </div>
+  </div>
+</section>
+
+<!--PROD-END-->
 <!-- ============ LINKEDIN A–Z ============ -->
 <section class="view page" id="v-li" role="tabpanel" hidden>
   <div class="inner">
@@ -729,7 +789,7 @@ const css = getComputedStyle(document.documentElement);
 const col = c => css.getPropertyValue('--'+c).trim();
 
 /* ======================= TABS ======================= */
-const views = {tree:'v-tree',cmp:'v-cmp',rep:'v-rep',risk:'v-risk',adv:'v-adv',camp:'v-camp',plan:'v-plan',sales:'v-sales',li:'v-li'};
+const views = {tree:'v-tree',cmp:'v-cmp',rep:'v-rep',risk:'v-risk',adv:'v-adv',camp:'v-camp',plan:'v-plan',sales:'v-sales',prod:'v-prod',li:'v-li'};
 function show(v){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.v===v));
   Object.entries(views).forEach(([k,id])=>document.getElementById(id).hidden = k!==v);
